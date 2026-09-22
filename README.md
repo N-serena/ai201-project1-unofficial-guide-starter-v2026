@@ -303,17 +303,105 @@ thing I have going into unit 2.
 
      Milestone 1. -->
 
+From `results/run_2026-09-22_1226_before.md`, produced by `run_eval.py::main`
+at top-k 5 and cutoff 0.72, three runs per question with caching off. No
+`scorer.py` exists yet, so the script left its verdict columns blank and I
+judged all fifteen answers by reading them.
+
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
-| 2. Every answer names a source | 5 of 5 |  |  |  |  |
-| 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
-| 4. | | | | | |
-| 5. | | | | | |
+| 1. Retrieved chunk contains the answer | 4 of 5 | 5 of 5 | 5 of 5 | 5 of 5 | MET |
+| 2. Every answer names a source | 5 of 5 | 5 of 5 | 5 of 5 | 5 of 5 | MET |
+| 3. Gate stops out-of-corpus questions | 4 of 5 | 5 of 5 | 5 of 5 | 5 of 5 | MET |
+| 4. Chunks start at a heading, none under 150 chars | 5 of 5 sampled, and no chunk in the index under 150 | 96 of 96 | 96 of 96 | 96 of 96 | MET |
+| 5. The source named is the right source | 4 of 5 | 5 of 5 | 5 of 5 | 5 of 5 | MET |
 
-<!-- Underneath, paste the REAL output for each criterion from one of your
-     runs — the actual text your system produced, not a description of it.
-     Name the file and function that produced it. -->
+**Three of these five cannot vary between runs, and the identical columns are
+the honest result rather than a copy-paste.** `README.md` already says this
+about criterion 3. It is equally true of criterion 1, which is decided entirely
+by retrieval — the same question against the same index returns the same
+chunks, and the best distances in the run log are identical to four decimal
+places across all three runs. It is true of criterion 4 as well, which is a
+property of the index and never reaches the model at all. Only criteria 2 and 5
+depend on generation and could have differed; both came out the same three
+times anyway.
+
+### Real output
+
+**Criterion 1 — retrieved chunk contains the answer.** Retrieval by
+`store.py::search` over chunks from `chunker.py::split_documents`. The
+`expects` string from `questions.py` appears in the retrieved chunks for all
+five. Best distances, identical in all three runs:
+
+```
+0.3221  guide_kestrelford.md#3   What time does the bakery in Kestrelford sell out?
+0.2437  guide_marchwood.md#2     How often do Marchwood's trams run on weekdays?
+0.6295  guide_kestrelford.md#2   Why do visitors get caught out by bus tickets in this region?
+0.3368  guide_elder_ness.md#1    When does the road to Elder Ness flood?
+0.2794  guide_brightwater.md#4   How long should I allow for the mill museum in Brightwater?
+```
+
+**Criterion 2 — every answer names a source.** Written by
+`generate.py::answer_from_chunks`. All fifteen answers named one. Three from
+the log, showing the three different formats the model chose:
+
+```
+Marchwood's trams run every 8 minutes on weekdays (guide_marchwood.md).
+```
+
+```
+The bakery in Kestrelford sells out by 11am. 
+
+*(Source: guide_kestrelford.md and guide_eating.md)*
+```
+
+```
+Marchwood's trams run every 8 minutes on weekdays. 
+
+Source: `guide_marchwood.md`
+```
+
+**Criterion 3 — the gate stops out-of-corpus questions.** Produced by
+`run_eval.py::check_out_of_scope`, one deterministic pass:
+
+```
+  refused  (best distance 0.803)  What is the capital of Mongolia?
+  refused  (best distance 0.888)  How do I change the oil in a diesel engine?
+  refused  (best distance 0.975)  Who won the 1994 World Cup?
+  refused  (best distance 0.835)  What is the recommended dosage of ibuprofen for a headache?
+  refused  (best distance 0.836)  How do I write a for loop in Rust?
+  -> gate refused 5 of 5
+```
+
+**Criterion 4 — chunks start at a heading, none under 150 characters.** Not
+something `run_eval.py` measures, so this is checked directly against
+`chunker.py::split_documents`:
+
+```
+total 96
+not starting at a heading: none
+shorter than 150: none
+```
+
+And from `python app.py index`:
+
+```
+  chunked  96 chunks, 315 characters on average (shortest 174, longest 610), produced by chunker.py::split_documents
+```
+
+**Criterion 5 — the source named is the right source.** Judged by reading each
+answer against the document it cites. All five name a document that genuinely
+contains the fact. The one I expected to fail:
+
+```
+You should allow 90 minutes for the mill museum in Brightwater (guide_brightwater.md).
+```
+
+`guide_givens_mill.md` was retrieved for this question — it is in the sources
+list for all three runs — and the model cited `guide_brightwater.md` anyway,
+which is the file holding "Allow 90 minutes". Question 1 cites two documents,
+`guide_kestrelford.md` and `guide_eating.md`, and both really do carry the 11am
+line, so I counted it correct rather than penalising the extra citation.
 
 ## Verdicts
 
@@ -328,31 +416,90 @@ thing I have going into unit 2.
 
 | # | Criterion | Verdict | How I decided |
 |---|---|---|---|
-| 1 |  |  |  |
-| 2 |  |  |  |
-| 3 |  |  |  |
-| 4 |  |  |  |
-| 5 |  |  |  |
+| 1 | Retrieved chunks contain the answer | **MET** | Searched the retrieved chunks for the `expects` string I wrote in `questions.py` at Milestone 2, before any of this ran. Present for all five. Not close: the target was 4 of 5. |
+| 2 | Every answer names a source | **MET** | Read all fifteen answers. Every one names a document. I counted a source as named in whatever format the model chose — `(guide_marchwood.md)`, a `Source:` line, a backticked filename — since the criterion asks whether a source is named, not how. |
+| 3 | The gate stops out-of-corpus questions | **MET** | From the gate table. All five refused, and the closest, Mongolia at 0.803, sits 0.083 above the 0.72 cutoff. Nothing near the line. |
+| 4 | Chunks start at a heading, none under 150 chars | **MET** | Checked all 96 chunks rather than the 5 I sampled, since the criterion claims something about the index. None starts mid-sentence; the shortest is 174. **The tightest of the five** — 24 characters of margin on a 150 floor. |
+| 5 | The source named is the right source | **MET** | Read each answer against the document it cites and confirmed that document contains the stated fact. One judgment call: question 1 cites two documents, `guide_kestrelford.md` and `guide_eating.md`. Both genuinely carry the 11am line, so I counted it correct. Had either been wrong I would have scored it a miss, since the criterion is about the source being right. |
 
 ## Diagnoses
 
-<!-- For each miss: which stage caused it, and how. The stage alone isn't
-     enough — you need the mechanism.
+**I missed nothing. All five criteria are MET, and four of the five came in at
+5 of 5 against targets of 4 of 5.** So this section is the other thing that
+question asks for: whether the targets were set low, and what is broken anyway.
 
-     Not a diagnosis: "Question 3 didn't work."
-     A diagnosis:     "Question 3 asks about laundry costs. The answer is in
-                       one sentence that got split across two chunks, so
-                       neither chunk on its own contains it."
+### The targets were set low, and I can say exactly why
 
-     The five stages: loading → chunking → embedding → retrieval → generation.
+Three of them were set at 4 of 5 for reasons that turned out to be wrong.
 
-     Look for a pattern. If three misses all ask about numbers, that's one
-     problem, not three.
+**Criterion 1** was 4 of 5 because I predicted in `criteria.md` that the mill
+museum question would fail — `guide_givens_mill.md` is a whole document about a
+working watermill, and I expected it to win on the word "mill". It came back at
+0.2794, the second-closest distance of the five, and the model cited
+`guide_brightwater.md` correctly all three runs. I built in a failure that did
+not happen. It should have been 5 of 5.
 
-     Missed nothing? Say so, then say honestly whether your targets were set
-     low, and which one you'd tighten and to what.
+**Criterion 3** was 4 of 5 in case the Mongolia question slipped through, since
+the corpus is full of place-and-population language. It is the closest of the
+five out-of-scope questions, which was the right call, but at 0.803 against a
+0.72 cutoff it is not remotely close to passing. The measured gap between the
+two groups is 0.17 wide. It should have been 5 of 5.
 
-     Milestone 3. -->
+**Criterion 5** was 4 of 5 for the same mill-museum reason as criterion 1, and
+is wrong for the same reason.
+
+**Criterion 4 is the one I would leave alone.** It is the only criterion with a
+real margin worth reporting rather than a wide one: the shortest chunk in the
+index is 174 against a floor of 150. It is also the only one that would have
+failed before Milestone 3, when the shortest chunk was 24 characters.
+
+### What is broken anyway: my test set cannot see the defect I already found
+
+Passing everything does not mean the system works. In Milestone 3 I recorded
+that the *Getting there* section of `guide_kestrelford.md` had fallen to 7th
+for *"how do I get to Kestrelford?"*, outside the default top-k of 5. That is
+still true, and I measured how far it spreads:
+
+| Town | Rank of its own *Getting there* section |
+|---|---|
+| Halden Bay | 1 |
+| Brightwater | 3 |
+| Thornby Wells | 3 |
+| Elder Ness | 7 |
+| Kestrelford | 7 |
+| Marchwood | 9 |
+| Corry Vale | 9 |
+| Pellew Sands | 9 |
+| Givens Mill | 13 |
+
+**For 6 of the 9 towns, the section that answers "how do I get there" is not
+retrieved at all at `TOP_K = 5`.** This is not one unlucky question.
+
+**Stage: chunking, showing up in retrieval.** The decision is in
+`chunker.py::split_documents`; the symptom appears in `store.py::search`. The
+mechanism: every chunk from one town now opens with the same `# Kestrelford`
+line, and chunks average 315 characters, so that shared prefix is a large
+fraction of each one. For a query like "how do I get to Kestrelford?", the town
+name is the only strong signal in the question — "get to" is generic — so all
+eight Kestrelford chunks score alike on the part that matters, and the thing
+that should separate them, the `## Getting there` heading, is one short line
+against 250 characters of body text about pubs and inns. *Where to stay* wins
+because its body is longer, not because it is more relevant.
+
+This is the cost of the fix that made criterion 5 pass. The title prefix is
+what stops the nine byte-identical *Practical notes* sections being
+indistinguishable, and it is what let the model cite `guide_brightwater.md`
+over `guide_givens_mill.md`. The same prefix is what flattens the sections
+within a town. One change, helping one criterion and breaking something no
+criterion measures.
+
+**Why none of my five questions catches it.** Four of them pair a place with a
+distinctive content word — bakery, trams, flood, museum — and each of those
+words appears in the body of exactly one section, so the body does the
+discriminating and the title prefix only helps. The fifth names no town at all.
+Not one has the shape that breaks: a generic verb plus a town name, where the
+title is the only thing the query has to go on. I wrote five questions that the
+title prefix was guaranteed to help, before I had written the title prefix.
 
 ## The Improvement
 
