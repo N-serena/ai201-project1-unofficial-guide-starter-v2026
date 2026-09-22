@@ -22,10 +22,17 @@ to it, write down what you saw, and move on. That's a real observation about
 your pipeline, not giving up.
 """
 
+import re
 from dataclasses import dataclass
 
 import config
 from ingest import Document
+
+# A chunk shorter than this is a heading with nothing under it. Those get
+# folded into the chunk before them.
+MIN_CHUNK = 150
+
+SECTION_HEADING = re.compile(r"^##\s+.*$", re.M)
 
 
 @dataclass
@@ -80,24 +87,114 @@ def fallback_split(
     return chunks
 
 
+def document_title(text: str) -> str:
+    """The `# Title` line, or "" if the document doesn't open with one."""
+    first = text.lstrip().split("\n", 1)[0].strip()
+    return first if first.startswith("# ") else ""
+
+
+def sections(text: str) -> list[tuple[str, str]]:
+    """
+    Split a document into (heading, body) pairs at its `##` lines.
+
+    The first pair has an empty heading and holds everything above the first
+    `##` — the title line and, in the town guides, an opening paragraph.
+    """
+    marks = list(SECTION_HEADING.finditer(text))
+    if not marks:
+        return [("", text.strip())]
+
+    pairs = [("", text[: marks[0].start()].strip())]
+    for i, mark in enumerate(marks):
+        end = marks[i + 1].start() if i + 1 < len(marks) else len(text)
+        pairs.append((mark.group().strip(), text[mark.end() : end].strip()))
+    return pairs
+
+
+def paragraph_groups(body: str, cap: int) -> list[str]:
+    """Break a section at blank lines so each piece stays under `cap`."""
+    if len(body) <= cap:
+        return [body]
+
+    groups: list[str] = []
+    current = ""
+    for para in re.split(r"\n\s*\n", body):
+        para = para.strip()
+        if not para:
+            continue
+        joined = f"{current}\n\n{para}" if current else para
+        if current and len(joined) > cap:
+            groups.append(current)
+            current = para
+        else:
+            current = joined
+    if current:
+        groups.append(current)
+    return groups
+
+
+def absorb_short(pieces: list[str]) -> list[str]:
+    """Fold anything under MIN_CHUNK into the piece before it."""
+    out: list[str] = []
+    for piece in pieces:
+        if out and len(piece) < MIN_CHUNK:
+            out[-1] = f"{out[-1]}\n\n{piece}"
+        else:
+            out.append(piece)
+    return out
+
+
 def split_documents(documents: list[Document]) -> list[Chunk]:
     """
-    Split documents into chunks. ⚠️ REPLACE THE BODY OF THIS IN MILESTONE 3.
+    Split each guide at its `##` section headings, one chunk per section.
 
-    Right now it just calls the fallback. That is the plain, generic behaviour
-    the brief is talking about.
+    Every document in city_guides is a title followed by labelled sections —
+    Getting there, Getting around, Eat and drink, and so on — and each section
+    is one self-contained topic averaging 291 characters. The heading is where
+    the subject changes, so it is the boundary worth cutting on.
 
-    When you write your own strategy, set `produced_by` to
-    "chunker.py::split_documents" so your README's Sample Chunks section names
-    the right function. `app.py chunks` prints that string for you.
+    Two things every chunk carries:
 
-    Things worth thinking about before you write any code:
-      - Are your documents short posts or long guides?
-      - Is the useful information in one sentence, or spread over a paragraph?
-      - Would splitting on paragraph breaks keep more thoughts intact than
-        splitting on a character count?
+    - The document title, prefixed onto the text. A section body says "Buses
+      run four times a day" without ever naming the town, so the title is what
+      makes the chunk answerable on its own. It also separates the "Practical
+      notes" section, which is byte-identical across all nine town guides.
+    - The section heading, which tells the embedding what kind of question the
+      chunk answers.
+
+    Sections over CHUNK_SIZE are broken at blank lines. Nothing under
+    MIN_CHUNK survives as its own chunk.
     """
-    return fallback_split(documents)
+    cap = config.CHUNK_SIZE
+    chunks: list[Chunk] = []
+
+    for doc in documents:
+        title = document_title(doc.text)
+        pieces: list[str] = []
+
+        lead_body = sections(doc.text)[0][1]
+        intro = lead_body[len(title) :].strip() if title else lead_body
+        if intro:
+            pieces.append(f"{title}\n\n{intro}" if title else intro)
+
+        for heading, body in sections(doc.text)[1:]:
+            if not body:
+                continue
+            header = "\n".join(part for part in (title, heading) if part)
+            for group in paragraph_groups(body, cap):
+                pieces.append(f"{header}\n\n{group}" if header else group)
+
+        for index, text in enumerate(absorb_short(pieces)):
+            chunks.append(
+                Chunk(
+                    text=text,
+                    source=doc.source,
+                    index=index,
+                    produced_by="chunker.py::split_documents",
+                )
+            )
+
+    return chunks
 
 
 def describe(chunks: list[Chunk]) -> str:

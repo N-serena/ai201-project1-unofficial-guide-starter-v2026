@@ -29,54 +29,138 @@
 
 ## Chunking Strategy
 
-**Chunk size:**
-**Overlap:**
+**Chunk size:** 600 characters, as a ceiling rather than a target. One chunk is
+one `##` section.
+**Overlap:** 0
 
-<!-- What about YOUR documents made you pick these numbers? Short posts and
-     long sectioned guides don't want the same chunking, and "800 seemed
-     reasonable" earns nothing. Point at something you noticed when you read
-     the documents in Milestone 1.
+Chunks are cut at `##` section headings, not at a character count. Every
+document in `city_guides` is a `# Title` followed by labelled sections —
+*Getting there*, *Getting around*, *Eat and drink*, *What to see*, *Where to
+stay*, *When to go*, *Practical notes* — and I measured the 14 documents before
+picking anything: **98 sections, averaging 291 characters, longest 708**. Each
+section is one self-contained topic. The heading is where the subject changes,
+so it is the boundary worth cutting on.
 
-     If you changed your mind partway through, say so and say why. That's worth
-     more than pretending you got it right first time.
+The 600 ceiling only does something in two places, where a section holds
+several separate answers instead of one. `guide_accessibility.md` → *Straightforward*
+was 708 characters covering Thornby Wells, Marchwood and Brightwater in three
+bolded paragraphs; a question about one of those three was competing with the
+other two inside the same chunk. Over the ceiling, a section is broken at a
+blank line, which puts those towns in separate chunks. That took the corpus
+from 94 chunks to 96.
 
-     Milestone 3. -->
+**Every chunk carries its document title and section heading as a prefix.**
+This is the part that matters most, and it fixes two things I found in the
+documents:
+
+1. A section body says "Buses run four times a day" and never names the town.
+   On its own that chunk cannot answer anything. With `# Halden Bay` on the
+   front, it can.
+2. Nine of the fourteen documents end with a byte-identical *Practical notes*
+   paragraph. Without a title prefix those are nine indistinguishable chunks;
+   with one they are nine distinct chunks that name their own town.
+
+Overlap is 0 because the title-and-heading prefix supplies the context that
+overlap was there to provide. Neighbouring sections are about different
+subjects, so bleeding 120 characters of *Getting around* into *Eat and drink*
+adds noise to both.
+
+**What this changed, measured.** The shipped `fallback_split` at 800/120 gave
+51 chunks, averaging 650 characters, **shortest 24** — a heading with nothing
+under it. Retrieving *"how do I get to Kestrelford?"* returned a chunk that
+began `on.  **Brightwater** is level along the river`, opening on the tail of a
+word. `split_documents` gives **96 chunks, averaging 315, shortest 174, longest
+610**, and all 96 begin at a title or a `##` heading.
+
+One honest wrinkle: the longest chunk is 610, above the 600 ceiling. The
+ceiling is applied to the section body, and the title and heading are added
+afterwards, so a finished chunk runs a few characters over. I left it there,
+since nothing depends on the exact boundary.
+
+**The title prefix has a cost, and I found it by measuring.** Re-running the
+same question after re-indexing:
+
+| | fallback_split | split_documents |
+|---|---|---|
+| Best distance for *"how do I get to Kestrelford?"* | 0.4449 | 0.3674 |
+| Top-5 results from `guide_kestrelford.md` | 1 of 5 | 4 of 5 |
+| Rank of the *Getting there* section | — | **7th** |
+
+Picking the right document got clearly better. Picking the right *section
+within* that document got worse. Every Kestrelford chunk now opens with
+`# Kestrelford`, so they all look alike to the embedding, and for a question
+about getting there the model was handed *Where to stay*, *Getting around* and
+*Eat and drink* ahead of the section that answers it. At `TOP_K = 5` the
+correct chunk is not retrieved at all.
+
+I am leaving this in place for unit 1 and carrying it into unit 2 as a known
+weakness. It is a live risk to criterion 1, and the shape of the fix is already
+visible — the title is doing too much work in the embedding and the heading too
+little.
 
 ## Sample Chunks
 
-<!-- Five chunks, pasted as text. Label each one and name the file it came from
-     AND the function that produced it — the grader checks your code against
-     what you claim here.
+From `python app.py chunks -n 5`, pasted unedited.
 
-     `python app.py chunks -n 5` prints all three for you. Copy them straight
-     across.
-
-     Milestone 3. -->
-
-**Chunk 1** — source: `` — produced by: ``
+**Chunk 1** — source: `guide_accessibility.md#0` — produced by: `chunker.py::split_documents`
 
 ```
+# Getting around the region with limited mobility
+
+An honest assessment rather than a promotional one. Some of these places are
+difficult and it is better to know in advance.
 ```
 
-**Chunk 2** — source: `` — produced by: ``
+**Chunk 2** — source: `guide_corry_vale.md#5` — produced by: `chunker.py::split_documents`
 
 ```
+# Corry Vale
+## Where to stay
+
+Perhaps thirty beds in the entire valley, spread across two pubs and a handful of farmhouse rooms. In summer these are booked months ahead. Camping is permitted on two marked fields and nowhere else.
 ```
 
-**Chunk 3** — source: `` — produced by: ``
+**Chunk 3** — source: `guide_givens_mill.md#2` — produced by: `chunker.py::split_documents`
 
 ```
+# Givens Mill
+## Getting around
+
+Everything is on one street along the river. The mill is at one end and the church at the other, eight minutes apart. The riverside path continues in both directions for as far as you want to walk.
 ```
 
-**Chunk 4** — source: `` — produced by: ``
+**Chunk 4** — source: `guide_kestrelford.md#5` — produced by: `chunker.py::split_documents`
 
 ```
+# Kestrelford
+## Where to stay
+
+Two inns on the square and a handful of rooms above the pubs. Booking ahead matters between May and September and not at all otherwise. There is no accommodation of any kind within four miles of the town in either direction.
 ```
 
-**Chunk 5** — source: `` — produced by: ``
+**Chunk 5** — source: `guide_regional_transport.md#0` — produced by: `chunker.py::split_documents`
 
 ```
+# Getting around the region
+## The railway
+
+The line runs along the river valley, connecting Brightwater to the regional
+hub in 50 minutes. Eleven services a day on weekdays, six on Sundays. The line
+north of Brightwater closed in 1963 and everything beyond it is bus or car.
+
+Tickets are cheaper booked the day before than on the day, and considerably
+cheaper than that booked a week ahead. There is no ticket office at
+Brightwater station outside weekday mornings; the machine on the platform takes
+cards only.
 ```
+
+Chunks 2 and 4 are the case for the title prefix. Both are *Where to stay*
+sections of almost identical shape, and the only thing separating them is the
+`# Corry Vale` and `# Kestrelford` on the front.
+
+**Against criterion 4:** all five begin at a title or a `##` heading, and none
+is under 150 characters. Checked across the whole index rather than the
+sample — of all 96 chunks, none starts mid-sentence and the shortest is 174.
 
 ## Sample Answer
 

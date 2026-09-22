@@ -27,8 +27,10 @@ CORPUS = os.getenv("AI201_CORPUS", "city_guides")
 # These are deliberately plain, generic numbers. Milestone 3 is where you
 # replace them with numbers that fit the documents you actually read.
 
-CHUNK_SIZE = 800        # characters per chunk
-CHUNK_OVERLAP = 120     # characters shared between neighbouring chunks
+# Chunks are one `##` section each, so these are a ceiling and a setting the
+# strategy no longer needs. See chunker.py::split_documents.
+CHUNK_SIZE = 600        # cap before a section is broken at a blank line
+CHUNK_OVERLAP = 0       # each chunk carries its own title and heading
 
 
 # ─── Retrieval (Milestone 4) ─────────────────────────────────────────────────
