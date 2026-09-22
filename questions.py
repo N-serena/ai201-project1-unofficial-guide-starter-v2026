@@ -22,12 +22,25 @@ names a target of "4 of 5", and four of three is not a thing.
 """
 
 QUESTIONS = [
-    # {"question": "...", "expects": "..."},
-    {"question": "", "expects": ""},
-    {"question": "", "expects": ""},
-    {"question": "", "expects": ""},
-    {"question": "", "expects": ""},
-    {"question": "", "expects": ""},
+    # Answer sits in one sentence, and two documents carry it
+    # (guide_kestrelford.md "Eat and drink", guide_eating.md "Local specifics").
+    # Known weakness: "11am" also appears in guide_givens_mill.md, about a car
+    # park filling up. A substring scorer will pass an answer about the wrong
+    # place.
+    {"question": "What time does the bakery in Kestrelford sell out?", "expects": "11am"},
+    # Same fact in guide_marchwood.md "Getting around" and
+    # guide_accessibility.md "Straightforward".
+    {"question": "How often do Marchwood's trams run on weekdays?", "expects": "8 minutes"},
+    # One sentence in guide_regional_transport.md "Buses", nowhere else.
+    {"question": "Why do visitors get caught out by bus tickets in this region?",
+     "expects": "each other's tickets"},
+    # One sentence in guide_elder_ness.md "Getting there", nowhere else.
+    {"question": "When does the road to Elder Ness flood?", "expects": "spring tides"},
+    # The hard one. Two words inside guide_brightwater.md "What to see", a section
+    # that also covers the river walk and the cathedral. "Mill" additionally names
+    # a whole other document about a different place.
+    {"question": "How long should I allow for the mill museum in Brightwater?",
+     "expects": "90 minutes"},
 ]
 
 # Questions from a different world entirely. Your gate should refuse all five.
