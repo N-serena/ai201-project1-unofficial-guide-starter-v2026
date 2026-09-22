@@ -21,11 +21,19 @@
 
 ## What This Does
 
-<!-- Three or four sentences. Which corpus you picked, and the kinds of
-     questions your system answers. Write it for someone who has never seen
-     this repo.
+This is a question-answering system over `city_guides`, a set of fourteen
+travel guides to an invented region — nine town guides plus five that cut
+across all of them on eating, walking, regional transport, seasons and
+accessibility. You ask it a plain question about the region and it retrieves
+the passages most likely to hold the answer, then has a model write a short
+answer from those passages and name the document it used.
 
-     Milestone 5. -->
+It answers specific, factual questions about the places in those guides: when
+the bakery in Kestrelford sells out, how often Marchwood's trams run, when the
+road to Elder Ness floods. It is deliberately narrow. A relevance gate measures
+how close the retrieved passages are to the question and refuses anything the
+documents do not cover, so asking it about diesel engines or the 1994 World Cup
+gets you a refusal instead of an invented answer.
 
 ## Chunking Strategy
 
@@ -235,18 +243,42 @@ the magnitude.
 
 ## How I Used AI
 
-<!-- Two specific moments. For each: what you asked for, what came back, and
-     what you changed about it.
+**1. The chunker, and the number it picked.** I asked Claude to replace
+`split_documents` with something that splits on `##` headings instead of a
+character count. What came back did that, and also prefixed every chunk with
+the document's `# Title` line, which I had not asked for. I kept the prefix —
+it is the thing that separates the nine byte-identical *Practical notes*
+sections, and without it a chunk reading "Buses run four times a day" never
+says which town it means.
 
-     "I asked Claude to write the chunking function from my notes. It ignored
-     the overlap, so I added that myself" is the level of detail we're after.
-     "I used AI to help me code" is not.
+What I did change was the size cap. The version I was handed kept
+`CHUNK_SIZE = 800`, and on this corpus that number does nothing at all: I had
+it measure the sections first, and the longest is 708 characters, so the cap
+would never once have fired. I set it to 600 instead, which splits the two
+sections that pack several places into one block — `guide_accessibility.md` →
+*Straightforward* covers Thornby Wells, Marchwood and Brightwater in three
+paragraphs, and a question about one of them was competing with the other two
+inside the same chunk.
 
-     Milestone 5. -->
+**2. Checking an improvement that was reported as a win.** After the chunking
+change the summary I got was that retrieval had improved, with the best
+distance on my test question dropping from 0.4449 to 0.3674 and four of the
+top five hits now coming from the right document. Both numbers are true. I
+asked for the same question to be run again at `--top-k 8` to see the whole
+ranking, and the *Getting there* section — the one that actually answers "how
+do I get to Kestrelford?" — came back **7th**, outside the default top five.
+The title prefix that fixed picking the right document had broken picking the
+right section inside it, because every chunk from one town now opens with the
+same line.
 
-**1.**
+I kept the change and wrote the regression into the Chunking Strategy section
+above rather than letting the improvement stand on its own. It is the clearest
+thing I have going into unit 2.
 
-**2.**
+<!-- NOTE TO ME: both of these are things that actually happened while I built
+     this, but check the wording is how I'd describe it before submitting. -->
+
+**Not doing a stretch feature.** Recording that here so it is explicit.
 
 <!-- ── Stretch features ─────────────────────────────────────────────────────
      Doing one? Say so here BEFORE you start. A feature this README never
