@@ -254,11 +254,20 @@ def generate(prompt: str, system: str | None = None, cache: bool = True) -> str:
                 or "resource" in message and "exhaust" in message
                 or "rate" in message and "limit" in message
             )
-            if not rate_limited:
+            # 503 UNAVAILABLE is the service under load. It comes back on its
+            # own, and an eval run loses every call it already paid for when
+            # one of these ends it partway through.
+            overloaded = (
+                "503" in message
+                or "unavailable" in message
+                or "high demand" in message
+            )
+            if not (rate_limited or overloaded):
                 raise
             backoff = 2 ** attempt
+            reason = "rate limit" if rate_limited else "service overloaded"
             print(
-                f"  [rate limit] service pushed back. Retrying in {backoff}s "
+                f"  [{reason}] service pushed back. Retrying in {backoff}s "
                 f"(attempt {attempt + 1} of {config.MAX_RETRIES}).",
                 file=sys.stderr,
                 flush=True,
@@ -266,7 +275,7 @@ def generate(prompt: str, system: str | None = None, cache: bool = True) -> str:
             time.sleep(backoff)
 
     raise RuntimeError(
-        f"Still rate limited after {config.MAX_RETRIES} attempts. Wait a "
+        f"Still pushed back after {config.MAX_RETRIES} attempts. Wait a "
         f"minute and try again — your key is fine.\nLast error: {last_error}"
     )
 
