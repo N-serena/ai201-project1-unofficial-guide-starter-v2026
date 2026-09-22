@@ -164,30 +164,74 @@ sample — of all 96 chunks, none starts mid-sentence and the shortest is 174.
 
 ## Sample Answer
 
-<!-- One complete question and answer, pasted as text, with the source line
-     visible. Milestone 4. -->
+**Question:** Why do visitors get caught out by bus tickets in this region?
 
-**Question:**
-
-**Answer:**
+**Answer:** from `python app.py ask "..."`, pasted unedited.
 
 ```
+  (best distance 0.630, cutoff 0.72)
+
+Visitors get caught out because three operators run in the region and they do not accept each other's tickets (guide_regional_transport.md).
+
+Sources retrieved: guide_accessibility.md, guide_eating.md, guide_kestrelford.md, guide_marchwood.md, guide_regional_transport.md
+
+1 model calls this session, 515 tokens (485 in, 30 out)
 ```
 
-**My relevance cutoff:**
+I picked this question because it is the one that made the cutoff matter. At
+the starter's default of 0.6 it would have been refused.
 
-<!-- The number you set in config.py, and how you got there.
+**My relevance cutoff:** 0.72
 
-     You ran five questions your corpus covers and the five in OUT_OF_SCOPE
-     that it clearly doesn't, and wrote down the best distance for each. What
-     did those two groups look like? Where was the gap? Put the actual numbers
-     here — the table below wants all ten rows.
+I ran all ten questions through `store.py::search` and recorded the best
+distance for each. The two groups do not overlap:
 
-     Milestone 4. -->
+- **In corpus:** 0.2437 to 0.6295
+- **Out of corpus:** 0.8026 to 0.9753
+
+The gap runs from **0.6295 to 0.8026** and is 0.17 wide, which is larger than I
+expected. I put the cutoff at 0.72, roughly in the middle, leaving about 0.09
+of margin on each side. The gate passes a question when the best distance is
+*under* the threshold (`gate.py::check`), so 0.72 admits everything in the
+first group and refuses everything in the second.
+
+**The default of 0.6 was wrong for this system, and by more than a rounding
+error.** Question 3 sits at 0.6295, so the shipped cutoff would have refused a
+question the corpus answers in a single sentence. Two things pushed it there:
+that question names no town, so it cannot lean on the title prefix the way the
+other four do, and my chunking change moved every distance in the corpus.
+The 0.6 default was measured against the shipped 800/120 chunking, and
+`corpora/README.md` says as much.
+
+Measured at 0.72: **5 of 5 in-corpus questions pass the gate, 5 of 5
+out-of-scope questions are refused.**
 
 | Question | In corpus? | Best distance |
 |---|---|---|
-|  |  |  |
+| What time does the bakery in Kestrelford sell out? | yes | 0.3221 |
+| How often do Marchwood's trams run on weekdays? | yes | 0.2437 |
+| Why do visitors get caught out by bus tickets in this region? | yes | 0.6295 |
+| When does the road to Elder Ness flood? | yes | 0.3368 |
+| How long should I allow for the mill museum in Brightwater? | yes | 0.2794 |
+| What is the capital of Mongolia? | no | 0.8026 |
+| How do I change the oil in a diesel engine? | no | 0.8881 |
+| Who won the 1994 World Cup? | no | 0.9753 |
+| What is the recommended dosage of ibuprofen for a headache? | no | 0.8350 |
+| How do I write a for loop in Rust? | no | 0.8365 |
+
+Two things I got wrong in advance, both worth keeping visible:
+
+**The question I named as the hard one was the second easiest.** In
+`criteria.md` I predicted the mill museum question would be the miss, because
+`guide_givens_mill.md` is a whole document about a working watermill. It came
+back at 0.2794 and the top hit was `guide_brightwater.md#4`, the section that
+actually holds "Allow 90 minutes". The word "Brightwater" in the question was
+enough, and the title prefix I added in Milestone 3 is what made it decisive.
+
+**I predicted Mongolia would be the out-of-scope question that slipped
+through, and it is the closest of the five — but at 0.8026 it is nowhere near
+getting through.** The reasoning was right about the ordering and wrong about
+the magnitude.
 
 ## How I Used AI
 

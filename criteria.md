@@ -70,6 +70,16 @@ a capital city is the same shape as a question this corpus does answer. So 4 of
 5, with the geography-shaped one named in advance as the one that might slip
 through.
 
+**Measured at Milestone 4** (the target above is unchanged — this fills in the
+numbers the section asked for). The gap is clean and much wider than I
+expected. In-corpus best distances ran 0.2437 to 0.6295; out-of-corpus ran
+0.8026 to 0.9753, so nothing overlaps and the gap is 0.17 wide. Cutoff set to
+0.72, in the middle of it.
+
+The prediction was half right. Mongolia is the closest of the five at 0.8026,
+exactly as reasoned, and it is still 0.08 clear of the cutoff. Naming it as the
+one that might slip through overstated the risk.
+
 ---
 
 ## 4. Chunks start where the documents do
