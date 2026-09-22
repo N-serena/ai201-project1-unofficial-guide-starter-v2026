@@ -1,6 +1,6 @@
 # The Unofficial Guide
 
-<!-- Replace this line with your name and which corpus you picked. -->
+<!-- Serena, city_guides -->
 
 > **This file is your submission.** Fill it in as you go — most sections get
 > written during the milestone that produces them, not at the end.
@@ -275,8 +275,6 @@ I kept the change and wrote the regression into the Chunking Strategy section
 above rather than letting the improvement stand on its own. It is the clearest
 thing I have going into unit 2.
 
-<!-- NOTE TO ME: both of these are things that actually happened while I built
-     this, but check the wording is how I'd describe it before submitting. -->
 
 **Not doing a stretch feature.** Recording that here so it is explicit.
 
