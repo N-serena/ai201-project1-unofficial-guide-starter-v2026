@@ -503,12 +503,65 @@ title prefix was guaranteed to help, before I had written the title prefix.
 
 ## The Improvement
 
-**What I changed:**
+**What I changed:** The chunk header went from two markdown lines to one, and
+the retrieval window widened from 5 to 8.
 
-**Why I picked it:**
+```
+                 before                      after
 
-<!-- Connect it to a specific diagnosis above in one sentence. If you can't,
-     you picked a fix because it sounded impressive. -->
+                 # Kestrelford               Kestrelford — Getting there
+                 ## Getting there
+                                             No railway station; the line
+                 No railway station; the     was closed in 1963 ...
+                 line was closed in 1963 ...
+```
+
+`chunker.py::split_documents` now writes `Kestrelford — Getting there` as a
+single line with the `#` markers dropped, and `TOP_K` in `config.py` is 8.
+
+**Why I picked it:** The diagnosis above says the title prefix flattens every
+section within a town, because the shared `# Kestrelford` line is a large
+share of a 313-character chunk while the `## Getting there` heading that
+should separate them is one short line — so this puts the two on the same
+line, at the same weight, with the markdown noise gone.
+
+The two parts are one fix rather than two, and the measurements are why. I
+tested three header formats as separate index variants before changing
+anything, using the `--variant` support in `store.py::build_index`, and
+scored each one on the diagnosis's own metric — the rank of each town's own
+*Getting there* section for "how do I get to X?":
+
+| Header format | Ranks across the 9 towns | Worst | Inside top-5 |
+|---|---|---|---|
+| `# Town` / `## Heading` (before) | 3, 7, 1, 9, 9, 7, 13, 9, 3 | 13 | 3 of 9 |
+| **`Town — Heading` (chosen)** | 1, 6, 1, 7, 7, 7, 7, 8, 2 | **8** | 3 of 9 |
+| `Heading — Town. Heading.` | 6, 7, 1, 8, 12, 6, 16, 9, 5 | 16 | 2 of 9 |
+
+Reformatting alone moves the worst rank from 13 to 8 and leaves the headline
+number unchanged at 3 of 9 — every correct chunk is now within reach of a
+window of 8, and none of them is inside a window of 5. Widening alone, without
+the reformat, would have had to reach 13 to catch every town. Doing both is
+what makes the correct section retrievable; doing either is not. I have
+reported them as one change because one diagnosis produced both and neither
+stands up without the other.
+
+Doubling the heading, the third row, made things worse, which is the reason I
+tested rather than reasoned.
+
+**Measured after the change**, at `TOP_K = 8`:
+
+```
+TOP_K=8: Getting there in window for 9/9
+{'Brightwater': 1, 'Kestrelford': 6, 'Halden Bay': 1, 'Marchwood': 8,
+ 'Corry Vale': 8, 'Elder Ness': 7, 'Givens Mill': 7, 'Pellew Sands': 8,
+ 'Thornby Wells': 2}
+```
+
+**It also fixed a mis-attribution none of my five questions tests.** Asked
+*"what is mobile coverage like in Marchwood?"* — a question landing squarely
+on the *Practical notes* paragraph that nine documents share — the old index
+returned `guide_eating.md`. The new one returns `guide_marchwood.md`. That is
+criterion 5 failing in a way my run log scored 5 of 5 on.
 
 ### Run Log — After
 

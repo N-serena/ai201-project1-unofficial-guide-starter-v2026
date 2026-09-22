@@ -35,7 +35,10 @@ CHUNK_OVERLAP = 0       # each chunk carries its own title and heading
 
 # ─── Retrieval (Milestone 4) ─────────────────────────────────────────────────
 
-TOP_K = 5               # how many chunks to pull back per question
+# Raised from 5 in unit 2. Across the nine town guides the section answering
+# "how do I get to X?" ranks as low as 8th in its own document, so a window of
+# 5 left it out for six of them. See README.md, The Improvement.
+TOP_K = 8               # how many chunks to pull back per question
 
 # The relevance gate. If the best chunk is further away than this, the system
 # refuses to answer instead of handing the model thin material.

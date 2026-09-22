@@ -153,14 +153,19 @@ def split_documents(documents: list[Document]) -> list[Chunk]:
     is one self-contained topic averaging 291 characters. The heading is where
     the subject changes, so it is the boundary worth cutting on.
 
-    Two things every chunk carries:
+    Every chunk opens with one header line, `Kestrelford — Getting there`,
+    carrying both the document title and the section heading. A section body
+    says "Buses run four times a day" without ever naming the town, so the
+    title is what makes the chunk answerable on its own, and it separates the
+    "Practical notes" section that is byte-identical across all nine town
+    guides. The heading tells the embedding what kind of question the chunk
+    answers.
 
-    - The document title, prefixed onto the text. A section body says "Buses
-      run four times a day" without ever naming the town, so the title is what
-      makes the chunk answerable on its own. It also separates the "Practical
-      notes" section, which is byte-identical across all nine town guides.
-    - The section heading, which tells the embedding what kind of question the
-      chunk answers.
+    The header was two markdown lines until unit 2. On one line without the
+    `#` markers, the title and the heading carry equal weight, and the section
+    a question is actually about ranks higher within its own document: across
+    the nine towns, the worst rank for "how do I get to X?" went from 13 to 8.
+    See README.md, The Improvement.
 
     Sections over CHUNK_SIZE are broken at blank lines. Nothing under
     MIN_CHUNK survives as its own chunk.
@@ -170,17 +175,19 @@ def split_documents(documents: list[Document]) -> list[Chunk]:
 
     for doc in documents:
         title = document_title(doc.text)
+        name = title.lstrip("#").strip()
         pieces: list[str] = []
 
         lead_body = sections(doc.text)[0][1]
         intro = lead_body[len(title) :].strip() if title else lead_body
         if intro:
-            pieces.append(f"{title}\n\n{intro}" if title else intro)
+            pieces.append(f"{name}\n\n{intro}" if name else intro)
 
         for heading, body in sections(doc.text)[1:]:
             if not body:
                 continue
-            header = "\n".join(part for part in (title, heading) if part)
+            topic = heading.lstrip("#").strip()
+            header = " — ".join(part for part in (name, topic) if part)
             for group in paragraph_groups(body, cap):
                 pieces.append(f"{header}\n\n{group}" if header else group)
 
