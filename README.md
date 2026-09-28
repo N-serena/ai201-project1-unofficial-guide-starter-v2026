@@ -293,20 +293,21 @@ thing I have going into unit 2.
 
 ## Run Log — Before
 
-<!-- Your five criteria, three runs each. `python run_eval.py --label before`
-     runs the questions, puts the OUT_OF_SCOPE ones through the gate, and
-     writes it all into results/ for you. Targets come from criteria.md; the
-     verdict column is your call.
-
-     Criterion 3 is measured in one deterministic pass rather than three, so
-     the same number goes in all three run columns. That's correct, not lazy.
-
-     Milestone 1. -->
-
 From `results/run_2026-09-22_1226_before.md`, produced by `run_eval.py::main`
 at top-k 5 and cutoff 0.72, three runs per question with caching off. No
 `scorer.py` exists yet, so the script left its verdict columns blank and I
 judged all fifteen answers by reading them.
+
+> **I changed one line of starter code to get this run to finish.** The first
+> two attempts died partway through on `503 UNAVAILABLE` — the model under
+> load, not a rate limit and not my key. `generate.py` already retries with
+> backoff, but only for 429 and quota errors, so a 503 raised immediately and
+> `run_eval.py` writes its report only after all fifteen calls succeed. Every
+> completed call was discarded. I added 503 to the same retry condition.
+> The before run then completed, absorbing nine retries across 24 calls, and
+> the after run absorbed two across 17. Nothing about retrieval, chunking or
+> the answers changed — the same call is simply attempted again when the
+> service pushes back.
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
@@ -404,15 +405,6 @@ which is the file holding "Allow 90 minutes". Question 1 cites two documents,
 line, so I counted it correct rather than penalising the extra citation.
 
 ## Verdicts
-
-<!-- MET or MISSED for each of the five, against the target you wrote last
-     unit — not a new one. Plus a sentence on how you decided. That sentence
-     matters most where it was close.
-
-     If your target said 4 of 5 and your runs came out 4, 3, 4, that's a MISS.
-     The target has to hold, not show up occasionally.
-
-     Milestone 2. -->
 
 | # | Criterion | Verdict | How I decided |
 |---|---|---|---|
@@ -565,39 +557,157 @@ criterion 5 failing in a way my run log scored 5 of 5 on.
 
 ### Run Log — After
 
-<!-- Same format, same five criteria, three runs each.
-     `python run_eval.py --label after` -->
+From `results/run_2026-09-22_1302_after.md`, same five criteria, three runs
+each, at top-k 8 and cutoff 0.72. Judged the same way as before, by reading
+all fifteen answers.
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
-| 2. Every answer names a source | 5 of 5 |  |  |  |  |
-| 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
-| 4. | | | | | |
-| 5. | | | | | |
+| 1. Retrieved chunk contains the answer | 4 of 5 | 5 of 5 | 5 of 5 | 5 of 5 | MET |
+| 2. Every answer names a source | 5 of 5 | 5 of 5 | 5 of 5 | 5 of 5 | MET |
+| 3. Gate stops out-of-corpus questions | 4 of 5 | 5 of 5 | 5 of 5 | 5 of 5 | MET |
+| 4. Chunks start at a heading, none under 150 chars | 5 of 5 sampled, and no chunk in the index under 150 | 96 of 96 | 96 of 96 | 96 of 96 | MET |
+| 5. The source named is the right source | 4 of 5 | 5 of 5 | 5 of 5 | 5 of 5 | MET |
 
 **Did it help?**
 
-<!-- Say plainly whether it did, and how you know. If it made things worse,
-     say that — a change that backfired, honestly reported, earns full credit
-     and is more interesting than one that worked. What matters is that you can
-     tell.
+**Yes, and the run log cannot show it.** The after table is identical to the
+before table — five criteria, all MET, all at 5 of 5. Nothing moved, because
+there was nowhere for it to move to. Every criterion was already at ceiling
+before I changed anything.
 
-     Milestone 4. -->
+What did move is the thing the diagnosis was about, measured the same way
+before and after:
+
+| | before | after |
+|---|---|---|
+| *Getting there* inside the retrieval window, across 9 towns | **3 of 9** | **9 of 9** |
+| Worst rank for that section | 13th | 8th |
+| *"mobile coverage in Marchwood?"* cites | `guide_eating.md` | `guide_marchwood.md` |
+
+Six towns went from having the section that answers "how do I get there" not
+retrieved at all, to having it retrieved every time. That is the fix working.
+It earns nothing in the run log because not one of my five test questions asks
+a question of that shape.
+
+**The honest summary is that I fixed a real bug and proved it with a
+measurement I had to invent, because the acceptance criteria I wrote in unit 1
+are not sensitive to it.** The criteria are not wrong, and I have not revised
+them — they measure real things and all five still hold. They are just
+incomplete in a way I could not see until I had results.
+
+**What I watched for and did not find.** Going from 5 to 8 chunks means the
+model sees more material it does not need, and my worry was that criterion 5
+would slip — more retrieved documents, more chances to cite one that merely
+came along. The opposite happened. The model now cites *more* documents, and
+every one of them is correct:
+
+- Question 2 cites `guide_marchwood.md` and `guide_accessibility.md`. Both
+  contain "every 8 minutes".
+- Question 4 cites `guide_elder_ness.md` and `guide_walking.md`. Both describe
+  the road flooding at the highest spring tides, six times a year. The answer
+  even adopts `guide_walking.md`'s phrase "single access road", so it is
+  genuinely using the second document rather than listing it.
+
+**One thing got slightly worse.** Two of the five in-corpus distances moved the
+wrong way — question 1 from 0.3221 to 0.3413, and question 3 from 0.6295 to
+0.6372. Question 3 is the one nearest the 0.72 cutoff, so its margin narrowed
+from 0.090 to 0.083. Three others improved, the largest being question 4 at
+0.3368 to 0.2666. The out-of-corpus group stayed where it was, closest still
+Mongolia at 0.808. The gap is intact and nothing is near the line, but the
+change did not make every number better and it would be wrong to present it
+as though it had.
 
 ## What's Still Broken
 
-<!-- For each criterion still missed after your fix: what you'd do about it,
-     and why you stopped where you did.
+No criterion is still missed, because none was missed to begin with. What
+follows is what is broken anyway.
 
-     "I ran out of time" is fine if it's true. Pretending nothing is left is
-     not.
+**The corpus contradicts itself and the system has no way to notice.** Nine
+town guides end with the same paragraph saying the nearest full hospital is in
+Brightwater. `guide_accessibility.md` says it is in Marchwood. Asking *"is
+there a hospital near Marchwood?"* retrieves both, ranked one and two:
 
-     Milestone 5. -->
+```
+0.2730  guide_accessibility.md#5   ... The nearest full hospital is in Marchwood ...
+0.3477  guide_marchwood.md#7       Marchwood — Practical notes ... nearest full hospital is in Brightwater ...
+```
+
+Two chunks in the same prompt asserting opposite things, and whichever the
+model picks, it will name a real source and sound confident. Criterion 5 passes
+either way, because the document it cites does contain the sentence it used. I
+would want a criterion about answers being *consistent with the corpus* rather
+than merely sourced from it, and a retrieval step that can flag when two
+retrieved chunks disagree. I did not attempt it because I only found the
+contradiction while reading documents in Milestone 1, wrote it down as the
+reason for criterion 5, and did not realise until now that criterion 5 does not
+actually catch it.
+
+**Widening the window is a workaround, not a ranking fix.** The correct chunk
+is retrieved for all nine towns now, but for six of them it is still ranked
+below sections that answer a different question. I am paying for that in every
+prompt: input tokens per answer went from about 521 to about 768, a 47%
+increase, for material the model mostly does not need. The real fix is making
+the heading count for more at ranking time — hybrid search with `rank-bm25`,
+which ships with the starter, would let an exact match on "getting there" carry
+weight that a dense embedding spreads thin. I stopped because that is a second
+change, and the unit asks for one change I can actually attribute.
+
+**Everything is judged by me reading it.** There is no `scorer.py`, so all
+thirty answers across both runs were scored by my own reading, and the
+"5 of 5" in both tables is my judgment rather than a measurement. Two places
+where a different reader could reasonably disagree: whether an answer citing
+two documents counts as correct when both are right, and whether a source named
+as `` `guide_marchwood.md` `` in a sentence counts the same as a `Source:`
+line. I wrote down how I decided each one so at least the judgment is visible.
+
+**A known hole in `expects` that I recorded before it mattered.** Question 1
+expects the substring `11am`, and `guide_givens_mill.md` also says a car park
+fills by 11am. A scorer built on substring matching would pass an answer about
+the wrong village. It did not happen in either run, but the check is weaker
+than the table makes it look. The comment is in `questions.py` from Milestone 2.
 
 ## What I'd Do Differently
 
-<!-- Knowing what you know now — which of your five criteria would you write
-     differently, and why?
+**Criterion 1, and it is not about the number.** As written it asks whether
+the retrieved chunks *include* one containing the answer. That is satisfiable
+by retrieving more chunks — and raising `TOP_K` from 5 to 8 is literally half
+of the fix I shipped this unit. My own improvement made criterion 1 easier to
+pass without making the ranking better, and the criterion cannot tell the
+difference. I would rewrite it about **position**, not membership:
 
-     Milestone 5. -->
+> For at least 4 of my 5 test questions, a chunk containing the answer is in
+> the top 3 results.
+
+That version would have failed in unit 1, which is the point. It would have
+caught the title-prefix problem in Milestone 3 instead of leaving me to find it
+by accident, and no amount of widening the window would make it pass.
+
+**The targets on criteria 1, 3 and 5 should all have been 5 of 5.** All three
+were set at 4 of 5 to leave room for failures I predicted and did not get: the
+mill museum question on 1 and 5, the Mongolia question on 3. Diagnosed at
+length in Diagnoses above. Setting a target that leaves room for a failure you
+have imagined is not the same as setting one you might miss.
+
+**Criterion 4 should describe the property, not the format.** I wrote "begins
+at a document title or a `##` section heading". Then in unit 2 I removed the
+`##` markers, and the criterion's wording no longer matched the thing it was
+protecting, even though the property held perfectly — I had to rewrite the
+check to validate header lines against the real titles and headings. The
+criterion should have said *no chunk begins mid-sentence*, which is what I
+actually cared about and would have survived the change.
+
+**The question set, more than any single criterion.** Four of my five questions
+pair a place with a distinctive word — bakery, trams, flood, museum — and the
+fifth names no place at all. Every one of them is a question the title prefix
+was guaranteed to help, and I wrote them before I had written the title prefix,
+which is luck rather than design. Missing entirely: a question where the place
+name is the only strong signal and the section topic has to do the
+discriminating, which is the exact shape that fails for six of nine towns. One
+question of the form "how do I get to X?" would have turned a unit of
+everything-passes into a unit with a real miss to diagnose.
+
+**On the whole thing.** The run log says 5 of 5 on every criterion in both
+runs, and the system had a retrieval bug affecting two thirds of the towns in
+the corpus the entire time. That gap between what my tests said and what was
+true is the thing I would most want to avoid repeating.
