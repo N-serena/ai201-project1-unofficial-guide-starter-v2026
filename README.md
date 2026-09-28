@@ -711,3 +711,34 @@ everything-passes into a unit with a real miss to diagnose.
 runs, and the system had a retrieval bug affecting two thirds of the towns in
 the corpus the entire time. That gap between what my tests said and what was
 true is the thing I would most want to avoid repeating.
+
+---
+
+## Stretch Feature — Hybrid Search
+
+> **Declared before starting, and not implemented at this commit.** Unit 1 says
+> I was not doing a stretch feature, and at that point I was not. This is a
+> unit 2 decision and the line above it stays as it was written.
+
+**What I am adding:** BM25 keyword scoring alongside the existing dense vector
+search in `store.py::search`, with the two rankings fused into one. The
+`rank-bm25` package already ships with the starter.
+
+**Why this one.** It is the fix my own Diagnoses section named and then put
+down. The diagnosis is that the section heading is under-weighted: for "how do
+I get to Kestrelford?" every chunk from that town scores alike on the dense
+embedding, and `## Getting there` is one short line that the embedding spreads
+thin. BM25 scores exact term overlap, so the literal words "getting there" in
+the header should count for something the dense model is averaging away.
+
+**What I expect, written down before I measure it.** The one-line header and
+`TOP_K = 8` got the correct section inside the window for 9 of 9 towns, but
+for six of them it is still ranked below sections answering a different
+question, and I am paying about 47% more input tokens per answer to carry
+chunks the model does not need. If BM25 does what I think, the correct section
+should move into the **top 3** for most towns, and I should be able to put
+`TOP_K` back to 5 and keep the fix.
+
+**How I will judge it:** the same nine-town probe used throughout unit 2,
+before and after, plus a check that criteria 1 to 5 do not regress. If it does
+not help, that goes here too.
