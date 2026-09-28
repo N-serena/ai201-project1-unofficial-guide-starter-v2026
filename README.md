@@ -816,6 +816,28 @@ all five in-corpus questions pass the gate, all five out-of-scope questions
 refused, and *"mobile coverage in Marchwood?"* still cites
 `guide_marchwood.md`.
 
+**What that check does and does not cover.** Everything above is measured on
+retrieval and the gate — criteria 1, 3 and 4, which never reach the model.
+Criteria 2 and 5 depend on generation, and I could not re-run `run_eval.py` a
+third time to confirm them: `gemini-3.5-flash-lite`, the model behind both
+committed run logs, spent the rest of the session returning `503 UNAVAILABLE`.
+Three attempts, the last two twenty minutes apart, each died on the first call
+after exhausting all four retries. `gemini-3.5-flash` answered fine, so it is
+that model's capacity rather than my key or my quota.
+
+I chose not to run the third eval on a different model. It would have produced
+a table that cannot be compared with the before and after ones, since any
+movement in criteria 2 or 5 could be the model rather than the retrieval
+change, and a number that looks like evidence without being evidence is worse
+than an honest gap.
+
+So the honest position on criteria 2 and 5 under hybrid search at
+`TOP_K = 6`: **untested end to end.** What I can say is that the model now
+receives six chunks instead of eight, all still carrying their source
+metadata, and that the retrieved set contains the answer for all five
+questions. Whether the model keeps citing correctly when handed two fewer
+chunks is the thing I would check first given working quota.
+
 ### The caveat that matters
 
 **`BM25_WEIGHT = 2.0` was chosen by sweeping it against the same nine-town
