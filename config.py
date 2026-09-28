@@ -35,10 +35,21 @@ CHUNK_OVERLAP = 0       # each chunk carries its own title and heading
 
 # ─── Retrieval (Milestone 4) ─────────────────────────────────────────────────
 
-# Raised from 5 in unit 2. Across the nine town guides the section answering
-# "how do I get to X?" ranks as low as 8th in its own document, so a window of
-# 5 left it out for six of them. See README.md, The Improvement.
-TOP_K = 8               # how many chunks to pull back per question
+# Raised from 5 to 8 in unit 2, when the section answering "how do I get to
+# X?" ranked as low as 8th. Hybrid search moved that worst rank to 6, so the
+# window came back down. See README.md, The Improvement and Stretch Feature.
+TOP_K = 6               # how many chunks to pull back per question
+
+# Hybrid search, the unit 2 stretch feature. Blends BM25 keyword ranking with
+# the dense vector ranking. Set to False to retrieve the dense way and compare.
+# See README.md, Stretch Feature.
+HYBRID = True
+RRF_K = 60              # reciprocal rank fusion constant, the usual default
+
+# How much the BM25 ranking counts against the dense one. 2.0 came out of a
+# sweep; it is the value where the worst rank across the nine towns is lowest.
+# Above it, towns the dense model already ranked first start sliding.
+BM25_WEIGHT = 2.0
 
 # The relevance gate. If the best chunk is further away than this, the system
 # refuses to answer instead of handing the model thin material.

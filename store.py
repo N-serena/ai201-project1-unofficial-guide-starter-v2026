@@ -18,6 +18,7 @@ rest of the project if they were wrong:
 """
 
 import os
+import re
 import shutil
 from dataclasses import dataclass
 
@@ -178,6 +179,62 @@ def build_index(
     return len(chunks)
 
 
+_bm25_cache: dict[str, tuple] = {}
+
+
+# Words that appear in nearly every chunk and in nearly every question. BM25
+# still scores them, and with short chunks that noise decides the ranking.
+_STOPWORDS = frozenset("""
+a an and are as at be been by can do does for from had has have how i if in into
+is it its me my no not of on or our should than that the their them then there
+these they this to was were what when where which who why will with would you your
+""".split())
+
+
+def _stem(word: str) -> str:
+    """
+    A crude suffix stripper, not a real stemmer.
+
+    It exists for one reason: the question says "get" and the header says
+    "Getting", and BM25 matches tokens exactly, so without this the one word
+    that should connect them never does.
+    """
+    for suffix in ("ing", "ed", "es", "s"):
+        if word.endswith(suffix) and len(word) - len(suffix) >= 3:
+            word = word[: -len(suffix)]
+            # "getting" -> "gett" -> "get"
+            if len(word) > 3 and word[-1] == word[-2]:
+                word = word[:-1]
+            return word
+    return word
+
+
+def _tokenize(text: str) -> list[str]:
+    """Lowercase alphanumeric runs, stopwords dropped, suffixes stripped."""
+    words = re.findall(r"[a-z0-9]+", text.lower())
+    return [_stem(w) for w in words if w not in _STOPWORDS]
+
+
+def _bm25_for(collection):
+    """
+    A BM25 index over every chunk in a collection, built once and reused.
+
+    Keyed on the collection's size, so re-indexing invalidates it.
+    """
+    from rank_bm25 import BM25Okapi
+
+    count = collection.count()
+    cached = _bm25_cache.get(collection.name)
+    if cached and cached[0] == count:
+        return cached[1], cached[2]
+
+    got = collection.get(include=["documents"])
+    ids, docs = got["ids"], got["documents"]
+    index = BM25Okapi([_tokenize(d) for d in docs])
+    _bm25_cache[collection.name] = (count, index, ids)
+    return index, ids
+
+
 def search(
     question: str,
     top_k: int | None = None,
@@ -185,9 +242,14 @@ def search(
     variant: str = "default",
 ) -> list[Result]:
     """
-    Retrieve the chunks closest in meaning to a question.
+    Retrieve the chunks most relevant to a question.
 
-    Returns them nearest-first, each with its distance.
+    Returns them best-first, each carrying its cosine distance.
+
+    With config.HYBRID on, the order comes from fusing two rankings: the dense
+    vector one and a BM25 keyword one. `distance` stays the true cosine
+    distance either way, because the relevance gate compares it against
+    config.THRESHOLD and a fused score would make that number meaningless.
     """
     top_k = top_k or config.TOP_K
     name = config.collection_name(corpus, variant)
@@ -199,9 +261,18 @@ def search(
             f"No index called '{name}'. Run `python app.py index` first."
         ) from exc
 
+    total = collection.count()
+    if not total:
+        return []
+
+    # Hybrid needs a distance for anything BM25 might promote, so it scores the
+    # whole collection. Fine at this size; a big corpus would want a capped
+    # candidate pool instead.
+    wanted = total if config.HYBRID else top_k
+
     raw = collection.query(
         query_embeddings=embed([question]),
-        n_results=min(top_k, collection.count()),
+        n_results=min(wanted, total),
     )
 
     results: list[Result] = []
@@ -217,7 +288,41 @@ def search(
                 produced_by=str(meta.get("produced_by", "unknown")),
             )
         )
-    return results
+
+    if not config.HYBRID:
+        return results
+
+    return _fuse(question, results, raw["ids"][0], collection)[:top_k]
+
+
+def _fuse(question, results, ids, collection) -> list[Result]:
+    """
+    Reciprocal rank fusion of the dense ranking and a BM25 ranking.
+
+    Each chunk scores 1/(k + rank) in each ranking and the two are added, the
+    BM25 side weighted by config.BM25_WEIGHT. Rank is used rather than the raw
+    scores because a cosine distance and a BM25 score are not on one scale.
+    """
+    index, bm_ids = _bm25_for(collection)
+    scores = index.get_scores(_tokenize(question))
+
+    order = sorted(range(len(bm_ids)), key=lambda i: scores[i], reverse=True)
+    bm_rank = {bm_ids[i]: rank for rank, i in enumerate(order, start=1)}
+
+    k = config.RRF_K
+    weight = config.BM25_WEIGHT
+    unranked = len(bm_ids) + 1
+
+    def fused(item):
+        dense_rank, chunk_id, _ = item
+        return 1.0 / (k + dense_rank) + weight / (k + bm_rank.get(chunk_id, unranked))
+
+    items = [
+        (rank, chunk_id, result)
+        for rank, (chunk_id, result) in enumerate(zip(ids, results), start=1)
+    ]
+    items.sort(key=fused, reverse=True)
+    return [result for _, _, result in items]
 
 
 def index_exists(corpus: str | None = None, variant: str = "default") -> bool:
