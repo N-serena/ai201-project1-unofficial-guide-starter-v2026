@@ -88,6 +88,10 @@ MAX_RETRIES = 4                # on 429 / resource-exhausted, with backoff
 CACHE_ENABLED = os.getenv("AI201_CACHE", "1") != "0"
 CACHE_DIR = ROOT / ".cache"
 
+# Fault injection for the model call: hang, empty, ratelimit or error. Unset
+# means the real service. See faults.py.
+FAULT = os.getenv("AI201_FAULT", "").strip().lower()
+
 
 # ─── Paths ───────────────────────────────────────────────────────────────────
 

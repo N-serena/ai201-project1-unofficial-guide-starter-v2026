@@ -188,6 +188,17 @@ def _get_client():
     if _client is None:
         from google import genai
 
+        if config.FAULT:
+            import faults
+            from google.genai import types
+
+            # The fake endpoint accepts any key, so the real one stays unused.
+            _client = genai.Client(
+                api_key="fault-injection",
+                http_options=types.HttpOptions(base_url=faults.base_url(config.FAULT)),
+            )
+            return _client
+
         key = os.getenv("GEMINI_API_KEY", "").strip()
         if not key:
             raise RuntimeError(
@@ -215,7 +226,8 @@ def generate(prompt: str, system: str | None = None, cache: bool = True) -> str:
     """
     global _session_calls, _cache_hits
 
-    use_cache = cache and config.CACHE_ENABLED
+    # An injected fault must reach the endpoint, so the cache is bypassed.
+    use_cache = cache and config.CACHE_ENABLED and not config.FAULT
     key = _cache_key(prompt, system)
 
     if use_cache:
