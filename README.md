@@ -848,3 +848,58 @@ a number I would expect to hold on questions I have not tried. Doing it
 honestly would mean a second set of probe questions, held back and looked at
 once. I did not have one, and inventing it after seeing these results would
 not have made it held back.
+
+---
+
+## Capstone
+
+**What This Extends**
+
+The Unofficial Guide, my project 1 system. It answers questions about the
+`city_guides` corpus from retrieved chunks, refuses when the relevance gate
+finds nothing close enough, and names the document it used. `serve.py` puts the
+same pipeline behind `POST /ask`.
+
+What's new is everything that happens when the one model call in the pipeline
+goes wrong. Before this unit, `/ask` only had a defined answer for the good
+path.
+
+**The Shape**
+
+Shape B: harden against failure.
+
+The model call in `generate.py::generate` is the only stage that leaves my
+machine, and it has three bad paths today. It sets no timeout, so a call that
+never answers holds `/ask` open indefinitely. An empty reply from the model goes
+out as an empty answer with status 200, which looks like success. When retries
+run out, or the call fails in a way the retry loop doesn't recognise, `/ask`
+returns a 500 carrying the raw exception text.
+
+I'm adding one failure layer around that call:
+
+- a timeout on each attempt, and one overall deadline across all retries
+- a named error for each way the call can fail: `timeout`, `empty_reply`,
+  `rate_limited`, `model_error`
+- a JSON response from `/ask` for each of those, with the error kind and a
+  503 or 504, so a caller can tell "the model failed" from "my request was bad"
+- a fault switch, set by an environment variable, that makes the call time
+  out, come back empty, error, or rate-limit on demand, without spending quota
+
+The claim when finished: every `/ask` comes back with a defined JSON response
+within a fixed time, whatever the model does.
+
+The run path and the structured log come with every shape, and they're in
+**Running It** and **Instrumentation** below.
+
+Out of scope:
+
+- **Contradictions in the corpus.** The two hospital claims from unit 2's
+  What's Still Broken stay unflagged. Detecting them is a second capability,
+  and shape B is about the bad path.
+- **Retrieval quality.** I'm not touching chunking, `TOP_K`, the BM25 weight or
+  the gate threshold. A change there would move my unit 2 numbers and blur what
+  this unit's extension did.
+- **Failures before the model call.** A missing index or a failed embedding
+  download already come back from `/ask` with a readable message. My claim
+  covers the model call only.
+- **Hosting.** The service runs locally on Path B, with a committed log.
