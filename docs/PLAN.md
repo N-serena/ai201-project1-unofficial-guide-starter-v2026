@@ -24,7 +24,7 @@ Status: `todo` · `doing` · `done`
 | 2 | Fault switch: an env var that makes the model call time out, return empty, error, or rate-limit on demand, with no API call | M2 | Claude | done |
 | 3 | Timeout on each model attempt, plus one overall deadline across retries | M2 | Claude | done |
 | 4 | Defined failure responses: empty reply and exhausted retries become a named error; `/ask` returns JSON with an error kind and a 502/503/504, never an empty answer or a bare 500 | M2 | Claude | done |
-| 5 | Regression check: `test.py` plus a few real questions still answer as before | M2 | Claude runs, you read | todo |
+| 5 | Regression check: `test.py` plus a few real questions still answer as before | M2 | Claude runs, you read | done, with a timeout finding to decide on |
 | 6 | Structured log: one JSON line per `/ask` in `logs/requests.jsonl` — timestamp, question, outcome, error kind, status code, duration, attempts, tokens. Failures logged too | M3 | Claude | todo |
 | 7 | `RUNNING.md` capstone section, tested from a clean clone in a fresh 3.13 venv | M3 | Claude | todo |
 | 8 | Cost: ten real requests, average tokens and seconds. README **Running It**, **Instrumentation** (10+ entries and a failed run) and **What It Costs** | M3 | Claude | todo |
@@ -105,6 +105,37 @@ the model call starts, so `hang` lands at the 10 s timeout plus that.
 
 Before this step, a numeric question and a list body both returned an HTML
 500 from Flask, checked against the step 3 `serve.py`.
+
+## Regression check (step 5)
+
+**`python test.py`:** 9 pass, 1 fail. The fail is the Python version: the
+`.venv` is 3.14, which predates the capstone. Step 7 builds a 3.13 one. Its
+model check calls the SDK directly, so it does not exercise `generate.py`.
+
+**`python run_eval.py --label regression`:** stopped partway through run 1
+with `ModelCallError: The model did not answer within 10.0s`. That was a real
+call to the live service, with no fault set. No results file was written.
+
+**Latency probe:** the five unit 2 questions, three runs, uncached, through
+`generate.answer_from_chunks`, with the limits raised to 60 s per attempt and
+120 s per call so nothing was cut off. Current settings: `TOP_K = 6`, hybrid
+search on. Unit 2's after run used `TOP_K = 8`.
+
+| Run | Bakery | Trams | Bus tickets | Elder Ness | Mill museum |
+|---|---|---|---|---|---|
+| 1 | 2.21 s | 1.09 s | 9.34 s | 7.08 s | 0.86 s |
+| 2 | 0.72 s | 0.56 s | 7.30 s | **20.88 s** | 7.02 s |
+| 3 | 0.97 s | 0.87 s | 0.88 s | 1.03 s | 0.85 s |
+
+- **Answers:** 15 of 15 contain the expected string. Whether each one names a
+  source was not checked.
+- **Latency:** median 1.03 s. Five calls took 7–9.4 s, and one took 20.88 s.
+- **Under the current limits:** 1 of 15 calls would be a 504 that used to be a
+  slow success. The 20.88 s call is also past the 20 s deadline.
+- **Tokens:** 9,987 for 15 calls, about 666 per call.
+
+**Open, for the user:** keep 10 s and 20 s and let the criteria and the
+Milestone 6 improvement deal with the tail, or change the limits now.
 
 ## Watch-outs
 

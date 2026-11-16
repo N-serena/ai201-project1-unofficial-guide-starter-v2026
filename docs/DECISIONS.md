@@ -57,6 +57,11 @@ set from the environment (`AI201_MODEL_TIMEOUT`, `AI201_MODEL_DEADLINE`).
 calls in a minute gets deadline errors where it used to wait. Unit 2's eval
 runs stay well under that.
 
+**Revisited in step 5:** the first reason rested on one sample. Fifteen real
+calls had a median of 1.03 s, five calls between 7 and 9.4 s, and one at
+20.88 s, so 10 s cuts off about 1 in 15. The limits are unchanged until the
+user decides. The data is in `docs/PLAN.md` under Regression check.
+
 ---
 
 ## 2026-11-16 — Faults are injected at the HTTP layer
