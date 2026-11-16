@@ -22,7 +22,7 @@ Status: `todo` · `doing` · `done`
 | 0 | `docs/PLAN.md` and `docs/DECISIONS.md` | — | Claude | done |
 | 1 | README `## Capstone` with **What This Extends** and **The Shape**, including out of scope | M1 | You decide, Claude drafts | done |
 | 2 | Fault switch: an env var that makes the model call time out, return empty, error, or rate-limit on demand, with no API call | M2 | Claude | done |
-| 3 | Timeout on each model attempt, plus one overall deadline across retries | M2 | Claude | todo |
+| 3 | Timeout on each model attempt, plus one overall deadline across retries | M2 | Claude | done |
 | 4 | Defined failure responses: empty reply and exhausted retries become a named error; `/ask` returns JSON with an error kind and a 503/504, never an empty answer or a bare 500 | M2 | Claude | todo |
 | 5 | Regression check: `test.py` plus a few real questions still answer as before | M2 | Claude runs, you read | todo |
 | 6 | Structured log: one JSON line per `/ask` in `logs/requests.jsonl` — timestamp, question, outcome, error kind, status code, duration, attempts, tokens. Failures logged too | M3 | Claude | todo |
@@ -71,6 +71,22 @@ Notes for steps 3 and 4:
   by the retry loop in `generate.py`.
 - The retry loop sleeps after the last attempt too. 8 of the 17.2 s under
   `ratelimit` is a wait that leads to no further attempt.
+
+## After step 3 (timeout and deadline)
+
+Same probe. Defaults: 10 s per attempt, 20 s for the whole call.
+
+| Fault | Status | Time | Endpoint hits | What the caller got |
+|---|---|---|---|---|
+| `hang` | 500 | 12.7 s | 1 | `RuntimeError: The model did not answer within 10.0s` |
+| `ratelimit` | 500 | 9.5 s | 4 | `RuntimeError: Still pushed back after 4 attempts ...` |
+| `ratelimit`, deadline 5 s | 500 | 5.7 s | 3 | `RuntimeError: Ran out of the 5s deadline ...` |
+| `empty` | 200 | 2.7 s | 1 | unchanged: `"answer": ""`. Step 4 |
+| `error` | 500 | 2.5 s | 1 | unchanged: raw `ServerError` text. Step 4 |
+| none, uncached | 200 | 3.5 s | 0 | correct answer, 1 real call, 658 tokens |
+
+The probe's time includes about 2.5 s of retrieval and model loading before
+the model call starts, so `hang` lands at the 10 s timeout plus that.
 
 ## Watch-outs
 

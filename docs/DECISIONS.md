@@ -4,6 +4,32 @@ Newest first.
 
 ---
 
+## 2026-11-16 — 10 s per attempt, 20 s per call, no retry after a timeout
+
+**Decision:** each model attempt gets `MODEL_TIMEOUT` (10 s) or whatever is
+left of `MODEL_DEADLINE` (20 s), whichever is smaller. The deadline covers
+pacing, every attempt and every backoff. A timed-out attempt ends the call. A
+backoff or pacing wait that would pass the deadline ends the call without
+sleeping. The loop no longer sleeps after its last attempt. Both values can be
+set from the environment (`AI201_MODEL_TIMEOUT`, `AI201_MODEL_DEADLINE`).
+
+**Why:**
+
+- A real answer took 3.5 s end to end, with the model call inside that. 10 s
+  leaves roughly three times that for a slow reply.
+- 20 s is about as long as a person waits on one question before giving up.
+- A service that hung for 10 s is unlikely to answer on the next try, and a
+  retry would spend the rest of the deadline finding that out.
+- The timeout is set per request through the SDK's `http_options`, so it
+  interrupts the real socket wait. `httpx` is imported directly to catch its
+  timeout. It arrives with `google-genai`, so `requirements.txt` is unchanged.
+
+**Trade-off:** pacing now counts against the deadline. A batch of more than 30
+calls in a minute gets deadline errors where it used to wait. Unit 2's eval
+runs stay well under that.
+
+---
+
 ## 2026-11-16 — Faults are injected at the HTTP layer
 
 **Decision:** `AI201_FAULT` points the Gemini client at a fake endpoint in

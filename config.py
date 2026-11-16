@@ -85,6 +85,11 @@ REQUESTS_PER_MINUTE = 30       # outgoing calls the limiter will allow per minut
 SESSION_REQUEST_BUDGET = 300   # stop and warn rather than draining the daily quota
 MAX_RETRIES = 4                # on 429 / resource-exhausted, with backoff
 
+# Time limits on the model call, in seconds. MODEL_TIMEOUT bounds one attempt.
+# MODEL_DEADLINE bounds the whole call: pacing, every attempt and every backoff.
+MODEL_TIMEOUT = float(os.getenv("AI201_MODEL_TIMEOUT", "10"))
+MODEL_DEADLINE = float(os.getenv("AI201_MODEL_DEADLINE", "20"))
+
 CACHE_ENABLED = os.getenv("AI201_CACHE", "1") != "0"
 CACHE_DIR = ROOT / ".cache"
 

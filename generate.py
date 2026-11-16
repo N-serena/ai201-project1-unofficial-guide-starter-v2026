@@ -34,6 +34,8 @@ import os
 import sys
 import time
 
+import httpx
+
 import config
 
 _call_times: list[float] = []
@@ -86,8 +88,11 @@ def clear_cache() -> int:
 # ─── Pacing and guards ───────────────────────────────────────────────────────
 
 
-def _wait_for_slot() -> None:
-    """Sleep, if we've used up this minute's allowance."""
+def _wait_for_slot(deadline: float | None = None) -> None:
+    """Sleep, if we've used up this minute's allowance.
+
+    Raises instead of sleeping when the wait would run past `deadline`.
+    """
     now = time.monotonic()
     _call_times[:] = [t for t in _call_times if now - t < 60.0]
 
@@ -95,6 +100,11 @@ def _wait_for_slot() -> None:
         return
 
     sleep_for = 60.0 - (now - _call_times[0]) + 0.1
+    if deadline is not None and now + sleep_for >= deadline:
+        raise RuntimeError(
+            f"Pacing would wait {sleep_for:.0f}s, past the "
+            f"{config.MODEL_DEADLINE:.0f}s deadline for this call."
+        )
     if sleep_for > 0:
         print(
             f"  [rate limit] {config.REQUESTS_PER_MINUTE} requests used this "
@@ -238,25 +248,41 @@ def generate(prompt: str, system: str | None = None, cache: bool = True) -> str:
 
     _check_budget()
 
+    deadline = time.monotonic() + config.MODEL_DEADLINE
     last_error: Exception | None = None
+    out_of_time = False
     for attempt in range(config.MAX_RETRIES):
-        _wait_for_slot()
+        _wait_for_slot(deadline)
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            out_of_time = True
+            break
+        timeout = min(config.MODEL_TIMEOUT, remaining)
         try:
             client = _get_client()
             _call_times.append(time.monotonic())
             _session_calls += 1
 
-            kwargs = {"model": config.MODEL, "contents": prompt}
+            call_config = {"http_options": {"timeout": int(timeout * 1000)}}
             if system:
-                kwargs["config"] = {"system_instruction": system}
+                call_config["system_instruction"] = system
 
-            response = client.models.generate_content(**kwargs)
+            response = client.models.generate_content(
+                model=config.MODEL, contents=prompt, config=call_config
+            )
             _record_tokens(response)
             text = (response.text or "").strip()
 
             if use_cache:
                 _cache_write(key, text)
             return text
+
+        except httpx.TimeoutException as exc:
+            # A hung service rarely recovers within the deadline, so no retry.
+            raise RuntimeError(
+                f"The model did not answer within {timeout:.1f}s "
+                f"(attempt {attempt + 1} of {config.MAX_RETRIES})."
+            ) from exc
 
         except Exception as exc:  # noqa: BLE001 — surfaced below
             last_error = exc
@@ -276,7 +302,12 @@ def generate(prompt: str, system: str | None = None, cache: bool = True) -> str:
             )
             if not (rate_limited or overloaded):
                 raise
+            if attempt + 1 == config.MAX_RETRIES:
+                break
             backoff = 2 ** attempt
+            if time.monotonic() + backoff >= deadline:
+                out_of_time = True
+                break
             reason = "rate limit" if rate_limited else "service overloaded"
             print(
                 f"  [{reason}] service pushed back. Retrying in {backoff}s "
@@ -286,6 +317,11 @@ def generate(prompt: str, system: str | None = None, cache: bool = True) -> str:
             )
             time.sleep(backoff)
 
+    if out_of_time:
+        raise RuntimeError(
+            f"Ran out of the {config.MODEL_DEADLINE:.0f}s deadline while the "
+            f"service kept pushing back.\nLast error: {last_error}"
+        )
     raise RuntimeError(
         f"Still pushed back after {config.MAX_RETRIES} attempts. Wait a "
         f"minute and try again — your key is fine.\nLast error: {last_error}"
