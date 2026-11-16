@@ -21,7 +21,7 @@ Status: `todo` · `doing` · `done`
 |---|---|---|---|---|
 | 0 | `docs/PLAN.md` and `docs/DECISIONS.md` | — | Claude | done |
 | 1 | README `## Capstone` with **What This Extends** and **The Shape**, including out of scope | M1 | You decide, Claude drafts | done |
-| 2 | Fault switch: an env var that makes the model call time out, return empty, error, or rate-limit on demand, with no API call | M2 | Claude | todo |
+| 2 | Fault switch: an env var that makes the model call time out, return empty, error, or rate-limit on demand, with no API call | M2 | Claude | done |
 | 3 | Timeout on each model attempt, plus one overall deadline across retries | M2 | Claude | todo |
 | 4 | Defined failure responses: empty reply and exhausted retries become a named error; `/ask` returns JSON with an error kind and a 503/504, never an empty answer or a bare 500 | M2 | Claude | todo |
 | 5 | Regression check: `test.py` plus a few real questions still answer as before | M2 | Claude runs, you read | todo |
@@ -50,6 +50,27 @@ Status: `todo` · `doing` · `done`
   `answered` and `refused`.
 - **Log record** (fixed in step 6): field names do not change after the first
   committed entries, so before and after runs stay comparable.
+- **Fault names** (fixed in step 2): `AI201_FAULT` is `hang`, `empty`,
+  `ratelimit` or `error`. Unset means the real service.
+
+## Baseline behaviour under each fault (step 2, before hardening)
+
+One question through `/ask` via the Flask test client, before any hardening.
+These are development checks, not criterion results.
+
+| Fault | Status | Time | Endpoint hits | What the caller got |
+|---|---|---|---|---|
+| `empty` | 200 | 2.4 s | 1 | `"answer": ""`, `refused: false` |
+| `error` | 500 | 2.3 s | 1 | raw `ServerError: 500 INTERNAL ...` text |
+| `ratelimit` | 500 | 17.2 s | 4 | raw `RuntimeError: Still pushed back after 4 attempts ...` |
+| `hang` | — | never | — | no response. Killed at 30 s |
+
+Notes for steps 3 and 4:
+
+- The SDK makes no retries of its own. Endpoint hits equal the attempts made
+  by the retry loop in `generate.py`.
+- The retry loop sleeps after the last attempt too. 8 of the 17.2 s under
+  `ratelimit` is a wait that leads to no further attempt.
 
 ## Watch-outs
 

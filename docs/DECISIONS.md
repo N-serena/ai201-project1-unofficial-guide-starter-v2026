@@ -4,6 +4,21 @@ Newest first.
 
 ---
 
+## 2026-11-16 — Faults are injected at the HTTP layer
+
+**Decision:** `AI201_FAULT` points the Gemini client at a fake endpoint in
+`faults.py`, served on `127.0.0.1` inside the same process. It hangs, returns an
+empty reply, returns 429, or returns 500. The cache is bypassed while a fault
+is set, and the client uses a dummy key.
+
+**Why:** the real SDK still sends the request, waits on the socket, and builds
+its own exceptions. The retry loop matches on the text of those exceptions, so
+a raised Python exception would test a message the SDK never produces. A hang
+on a real socket is also the only kind of hang an HTTP timeout can interrupt.
+No call reaches the real service, so failure trials cost no quota.
+
+---
+
 ## 2026-11-16 — Capstone criteria go in the existing `criteria.md`
 
 **Decision:** add a `## Capstone` heading at the end of `criteria.md` and put
