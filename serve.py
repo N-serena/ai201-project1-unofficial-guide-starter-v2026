@@ -35,6 +35,25 @@ import config
 
 app = Flask(__name__)
 
+# HTTP status for each error kind. The model call's kinds come from
+# generate.ModelCallError.
+ERROR_STATUS = {
+    "bad_request": 400,
+    "empty_reply": 502,
+    "model_error": 502,
+    "rate_limited": 503,
+    "timeout": 504,
+    "internal": 500,
+}
+
+
+def _error(kind: str, message: str, question: str | None = None):
+    """One JSON shape for every failure, so a caller can branch on `error_kind`."""
+    body = {"error": message, "error_kind": kind, "corpus": config.CORPUS}
+    if question is not None:
+        body["question"] = question
+    return jsonify(body), ERROR_STATUS[kind]
+
 
 @app.get("/health")
 def health():
@@ -70,27 +89,36 @@ def ask():
     A refused question is a 200, not an error. The gate refusing is your
     system working — it is an answer, and the JSON says so with
     `"refused": true` so whatever calls this can tell the two apart.
+
+    A failure returns `error` and `error_kind`, with the status from
+    ERROR_STATUS.
     """
     from app import ask_pipeline
+    from generate import ModelCallError, QuotaGuard
 
-    payload = request.get_json(silent=True) or {}
-    question = (payload.get("question") or "").strip()
+    payload = request.get_json(silent=True)
+    question = payload.get("question") if isinstance(payload, dict) else None
+    question = question.strip() if isinstance(question, str) else ""
 
     if not question:
-        return (
-            jsonify(
-                {
-                    "error": "Send JSON with a question in it, like "
-                    '{"question": "is the housing lottery random?"}'
-                }
-            ),
-            400,
+        return _error(
+            "bad_request",
+            "Send JSON with a question in it, like "
+            '{"question": "is the housing lottery random?"}',
         )
 
     try:
         outcome = ask_pipeline(question, corpus=config.CORPUS)
+    except ModelCallError as exc:
+        return _error(exc.kind, str(exc), question)
+    except QuotaGuard:
+        return _error(
+            "rate_limited",
+            "This server has used its request budget for the session.",
+            question,
+        )
     except Exception as exc:  # noqa: BLE001 — a reader gets this, not a traceback
-        return jsonify({"error": f"{type(exc).__name__}: {exc}"}), 500
+        return _error("internal", f"{type(exc).__name__}: {exc}", question)
 
     return jsonify(
         {

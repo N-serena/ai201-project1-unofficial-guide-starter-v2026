@@ -23,7 +23,7 @@ Status: `todo` · `doing` · `done`
 | 1 | README `## Capstone` with **What This Extends** and **The Shape**, including out of scope | M1 | You decide, Claude drafts | done |
 | 2 | Fault switch: an env var that makes the model call time out, return empty, error, or rate-limit on demand, with no API call | M2 | Claude | done |
 | 3 | Timeout on each model attempt, plus one overall deadline across retries | M2 | Claude | done |
-| 4 | Defined failure responses: empty reply and exhausted retries become a named error; `/ask` returns JSON with an error kind and a 503/504, never an empty answer or a bare 500 | M2 | Claude | todo |
+| 4 | Defined failure responses: empty reply and exhausted retries become a named error; `/ask` returns JSON with an error kind and a 502/503/504, never an empty answer or a bare 500 | M2 | Claude | done |
 | 5 | Regression check: `test.py` plus a few real questions still answer as before | M2 | Claude runs, you read | todo |
 | 6 | Structured log: one JSON line per `/ask` in `logs/requests.jsonl` — timestamp, question, outcome, error kind, status code, duration, attempts, tokens. Failures logged too | M3 | Claude | todo |
 | 7 | `RUNNING.md` capstone section, tested from a clean clone in a fresh 3.13 venv | M3 | Claude | todo |
@@ -45,9 +45,12 @@ Status: `todo` · `doing` · `done`
 
 ## Contracts to settle early
 
-- **Error kinds** (fixed in step 4, used by 6 and 10): `timeout`, `empty_reply`,
-  `rate_limited`, `model_error`, `bad_request`. Successful outcomes are
-  `answered` and `refused`.
+- **Error kinds** (fixed in step 4, used by 6 and 10), with their `/ask`
+  status: `bad_request` 400, `empty_reply` 502, `model_error` 502,
+  `rate_limited` 503, `timeout` 504, `internal` 500. Successful outcomes are
+  `answered` and `refused`, both 200. Every error body has `error`,
+  `error_kind` and `corpus`, plus `question` once one was read.
+  `serve.py::ERROR_STATUS` holds the mapping.
 - **Log record** (fixed in step 6): field names do not change after the first
   committed entries, so before and after runs stay comparable.
 - **Fault names** (fixed in step 2): `AI201_FAULT` is `hang`, `empty`,
@@ -87,6 +90,21 @@ Same probe. Defaults: 10 s per attempt, 20 s for the whole call.
 
 The probe's time includes about 2.5 s of retrieval and model loading before
 the model call starts, so `hang` lands at the 10 s timeout plus that.
+
+## After step 4 (defined failure responses)
+
+| Request | Status | Time | Hits | `error_kind` |
+|---|---|---|---|---|
+| fault `hang` | 504 | 12.8 s | 1 | `timeout` |
+| fault `empty` | 502 | 2.6 s | 1 | `empty_reply` |
+| fault `error` | 502 | 3.0 s | 1 | `model_error` |
+| fault `ratelimit` | 503 | 10.0 s | 4 | `rate_limited` |
+| fault `ratelimit`, deadline 5 s | 503 | 5.9 s | 3 | `rate_limited` |
+| no body, `{}`, blank, number, list | 400 | 0.0–0.1 s | 0 | `bad_request` |
+| none, uncached | 200 | 4.7 s | 0 | — correct answer, 658 tokens |
+
+Before this step, a numeric question and a list body both returned an HTML
+500 from Flask, checked against the step 3 `serve.py`.
 
 ## Watch-outs
 

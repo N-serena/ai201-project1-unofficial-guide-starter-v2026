@@ -51,6 +51,20 @@ class QuotaGuard(Exception):
     """Raised when a session blows through its request budget."""
 
 
+class ModelCallError(RuntimeError):
+    """The model call ended without a usable answer.
+
+    `kind` is one of `timeout`, `empty_reply`, `rate_limited`, `model_error`.
+    `str()` is a sentence for whoever asked. `detail` holds the service's raw
+    error text, when there was one, for the log.
+    """
+
+    def __init__(self, kind: str, message: str, detail: str | None = None):
+        super().__init__(message)
+        self.kind = kind
+        self.detail = detail
+
+
 # ─── Cache ───────────────────────────────────────────────────────────────────
 
 
@@ -101,9 +115,11 @@ def _wait_for_slot(deadline: float | None = None) -> None:
 
     sleep_for = 60.0 - (now - _call_times[0]) + 0.1
     if deadline is not None and now + sleep_for >= deadline:
-        raise RuntimeError(
-            f"Pacing would wait {sleep_for:.0f}s, past the "
-            f"{config.MODEL_DEADLINE:.0f}s deadline for this call."
+        raise ModelCallError(
+            "rate_limited",
+            f"Too many questions this minute. The next free slot is "
+            f"{sleep_for:.0f}s away, past the {config.MODEL_DEADLINE:.0f}s "
+            f"limit for one answer.",
         )
     if sleep_for > 0:
         print(
@@ -250,6 +266,7 @@ def generate(prompt: str, system: str | None = None, cache: bool = True) -> str:
 
     deadline = time.monotonic() + config.MODEL_DEADLINE
     last_error: Exception | None = None
+    last_was_rate_limit = False
     out_of_time = False
     for attempt in range(config.MAX_RETRIES):
         _wait_for_slot(deadline)
@@ -271,20 +288,14 @@ def generate(prompt: str, system: str | None = None, cache: bool = True) -> str:
                 model=config.MODEL, contents=prompt, config=call_config
             )
             _record_tokens(response)
-            text = (response.text or "").strip()
-
-            if use_cache:
-                _cache_write(key, text)
-            return text
-
         except httpx.TimeoutException as exc:
             # A hung service rarely recovers within the deadline, so no retry.
-            raise RuntimeError(
-                f"The model did not answer within {timeout:.1f}s "
-                f"(attempt {attempt + 1} of {config.MAX_RETRIES})."
+            raise ModelCallError(
+                "timeout",
+                f"The model did not answer within {timeout:.1f}s.",
+                detail=f"{type(exc).__name__}: {exc}",
             ) from exc
-
-        except Exception as exc:  # noqa: BLE001 — surfaced below
+        except Exception as exc:  # noqa: BLE001 — classified below
             last_error = exc
             message = str(exc).lower()
             rate_limited = (
@@ -301,7 +312,12 @@ def generate(prompt: str, system: str | None = None, cache: bool = True) -> str:
                 or "high demand" in message
             )
             if not (rate_limited or overloaded):
-                raise
+                raise ModelCallError(
+                    "model_error",
+                    "The model service returned an error.",
+                    detail=f"{type(exc).__name__}: {exc}",
+                ) from exc
+            last_was_rate_limit = rate_limited
             if attempt + 1 == config.MAX_RETRIES:
                 break
             backoff = 2 ** attempt
@@ -316,16 +332,50 @@ def generate(prompt: str, system: str | None = None, cache: bool = True) -> str:
                 flush=True,
             )
             time.sleep(backoff)
+            continue
 
+        # Blocked prompts arrive with no text at all; both cases are empty.
+        text = (response.text or "").strip()
+        if not text:
+            raise ModelCallError(
+                "empty_reply",
+                "The model sent back an empty reply.",
+                detail=f"finish_reason={_finish_reason(response)}",
+            )
+        if use_cache:
+            _cache_write(key, text)
+        return text
+
+    kind = "rate_limited" if last_was_rate_limit else "model_error"
     if out_of_time:
-        raise RuntimeError(
-            f"Ran out of the {config.MODEL_DEADLINE:.0f}s deadline while the "
-            f"service kept pushing back.\nLast error: {last_error}"
+        message = (
+            f"The model service kept pushing back until the "
+            f"{config.MODEL_DEADLINE:.0f}s limit ran out."
         )
-    raise RuntimeError(
-        f"Still pushed back after {config.MAX_RETRIES} attempts. Wait a "
-        f"minute and try again — your key is fine.\nLast error: {last_error}"
+    else:
+        message = (
+            f"The model service pushed back on all {config.MAX_RETRIES} "
+            f"attempts. Wait a minute and try again."
+        )
+    raise ModelCallError(
+        kind,
+        message,
+        detail=f"{type(last_error).__name__}: {last_error}" if last_error else None,
     )
+
+
+def _finish_reason(response) -> str | None:
+    """The first candidate's finish reason, or the block reason, if either exists."""
+    try:
+        candidates = response.candidates or []
+        if candidates and candidates[0].finish_reason is not None:
+            return str(candidates[0].finish_reason)
+        feedback = response.prompt_feedback
+        if feedback is not None and feedback.block_reason is not None:
+            return f"blocked:{feedback.block_reason}"
+    except AttributeError:
+        pass
+    return None
 
 
 # ─── The grounded answer ─────────────────────────────────────────────────────

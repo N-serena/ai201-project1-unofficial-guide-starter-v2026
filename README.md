@@ -881,7 +881,8 @@ I'm adding one failure layer around that call:
 - a named error for each way the call can fail: `timeout`, `empty_reply`,
   `rate_limited`, `model_error`
 - a JSON response from `/ask` for each of those, with the error kind and a
-  503 or 504, so a caller can tell "the model failed" from "my request was bad"
+  502, 503 or 504, so a caller can tell "the model failed" from "my request
+  was bad". A bad request gets the same shape with `bad_request` and a 400.
 - a fault switch, set by an environment variable, that makes the call time
   out, come back empty, error, or rate-limit on demand, without spending quota
 

@@ -4,6 +4,35 @@ Newest first.
 
 ---
 
+## 2026-11-16 — Error kinds, status codes and what the caller sees
+
+**Decision:** `generate.py` raises `ModelCallError` with a `kind`, a sentence
+for the caller, and the raw service error in `detail`. `serve.py` maps each
+kind to a status: 502 for `empty_reply` and `model_error`, 503 for
+`rate_limited`, 504 for `timeout`, 400 for `bad_request`, 500 for `internal`.
+The response carries the sentence. `detail` is kept for the log in step 6.
+
+**Why:**
+
+- 502 means the upstream service sent something unusable, which is what an
+  empty reply and a service error are. 503 says try later. 504 says the
+  upstream took too long. A caller can act on each one differently.
+- Raw exception text leaked the SDK's internals into every unit 2 error
+  response. The caller now gets a sentence, and the raw text goes to the log.
+- `ModelCallError` subclasses `RuntimeError`, so the CLI's existing handler
+  prints it unchanged.
+- `internal` covers anything outside the model call, like a missing index.
+  It's a sixth kind beyond the five planned, so no failure leaves without one.
+- Checking that `question` is a string fixes an HTML 500 on a numeric question
+  or a list body. It's outside the model call, but it's the one bad-request
+  path that crashed, and the fix is two lines.
+
+**Trade-off:** `run_eval.py` catches nothing. An empty reply used to be scored
+as an empty answer. It now stops the eval run with `ModelCallError`, the way a
+rate-limit failure already did.
+
+---
+
 ## 2026-11-16 — 10 s per attempt, 20 s per call, no retry after a timeout
 
 **Decision:** each model attempt gets `MODEL_TIMEOUT` (10 s) or whatever is
