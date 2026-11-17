@@ -32,6 +32,7 @@ import hashlib
 import json
 import os
 import sys
+import threading
 import time
 
 import httpx
@@ -148,8 +149,11 @@ def _check_budget() -> None:
     )
 
 
-def _record_tokens(response) -> None:
+def _record_tokens(response) -> tuple[int | None, int | None]:
     """Add one response's token counts to this session's running totals.
+
+    Returns this response's (prompt, output) counts, or None for any count the
+    response did not carry.
 
     These come off the response itself, which is the point. When you work out
     what a run costs, a number read back from the service is a measurement and
@@ -165,11 +169,14 @@ def _record_tokens(response) -> None:
     try:
         meta = getattr(response, "usage_metadata", None)
         if meta is None:
-            return
-        _session_prompt_tokens += int(getattr(meta, "prompt_token_count", 0) or 0)
-        _session_output_tokens += int(getattr(meta, "candidates_token_count", 0) or 0)
+            return None, None
+        prompt = getattr(meta, "prompt_token_count", None)
+        output = getattr(meta, "candidates_token_count", None)
+        _session_prompt_tokens += int(prompt or 0)
+        _session_output_tokens += int(output or 0)
+        return prompt, output
     except Exception:
-        pass  # accounting never breaks the thing it is accounting for
+        return None, None  # accounting never breaks the thing it is accounting for
 
 
 def usage() -> str:
@@ -204,6 +211,37 @@ def token_counts() -> dict[str, int]:
         "output": _session_output_tokens,
         "total": _session_prompt_tokens + _session_output_tokens,
     }
+
+
+# ─── Per-call stats ──────────────────────────────────────────────────────────
+# What the most recent generate() on this thread did, for the request log.
+# Thread-local because Flask serves each request on its own thread.
+
+_stats = threading.local()
+
+
+def reset_call_stats() -> dict:
+    """Start a fresh record for this thread and return it."""
+    _stats.call = {
+        "attempts": 0,
+        "cached": False,
+        "model_ms": None,
+        "prompt_tokens": None,
+        "output_tokens": None,
+    }
+    return _stats.call
+
+
+def call_stats() -> dict:
+    """A copy of this thread's record. Fields stay at their reset values when
+    generate() was never reached."""
+    current = getattr(_stats, "call", None)
+    return dict(current if current is not None else reset_call_stats())
+
+
+def _add_tokens(stats: dict, field: str, count: int | None) -> None:
+    if count is not None:
+        stats[field] = (stats[field] or 0) + int(count)
 
 
 # ─── The call ────────────────────────────────────────────────────────────────
@@ -250,7 +288,9 @@ def generate(prompt: str, system: str | None = None, cache: bool = True) -> str:
     Every call in this course goes through here. If you need to change how the
     model is called, change it in this one place.
     """
-    global _session_calls, _cache_hits
+    global _cache_hits
+
+    stats = reset_call_stats()
 
     # An injected fault must reach the endpoint, so the cache is bypassed.
     use_cache = cache and config.CACHE_ENABLED and not config.FAULT
@@ -260,9 +300,30 @@ def generate(prompt: str, system: str | None = None, cache: bool = True) -> str:
         hit = _cache_read(key)
         if hit is not None:
             _cache_hits += 1
+            stats["cached"] = True
+            stats["model_ms"] = 0
             return hit
 
     _check_budget()
+
+    started = time.monotonic()
+    try:
+        text = _call_with_retries(prompt, system, stats)
+    finally:
+        stats["model_ms"] = round((time.monotonic() - started) * 1000)
+
+    if use_cache:
+        _cache_write(key, text)
+    return text
+
+
+def _call_with_retries(prompt: str, system: str | None, stats: dict) -> str:
+    """Attempt the call until it answers, within MAX_RETRIES and MODEL_DEADLINE.
+
+    Returns non-empty text or raises ModelCallError. Records attempts and
+    tokens in `stats`.
+    """
+    global _session_calls
 
     deadline = time.monotonic() + config.MODEL_DEADLINE
     last_error: Exception | None = None
@@ -279,6 +340,7 @@ def generate(prompt: str, system: str | None = None, cache: bool = True) -> str:
             client = _get_client()
             _call_times.append(time.monotonic())
             _session_calls += 1
+            stats["attempts"] = attempt + 1
 
             call_config = {"http_options": {"timeout": int(timeout * 1000)}}
             if system:
@@ -287,7 +349,9 @@ def generate(prompt: str, system: str | None = None, cache: bool = True) -> str:
             response = client.models.generate_content(
                 model=config.MODEL, contents=prompt, config=call_config
             )
-            _record_tokens(response)
+            prompt_tokens, output_tokens = _record_tokens(response)
+            _add_tokens(stats, "prompt_tokens", prompt_tokens)
+            _add_tokens(stats, "output_tokens", output_tokens)
         except httpx.TimeoutException as exc:
             # A hung service rarely recovers within the deadline, so no retry.
             raise ModelCallError(
@@ -342,8 +406,6 @@ def generate(prompt: str, system: str | None = None, cache: bool = True) -> str:
                 "The model sent back an empty reply.",
                 detail=f"finish_reason={_finish_reason(response)}",
             )
-        if use_cache:
-            _cache_write(key, text)
         return text
 
     kind = "rate_limited" if last_was_rate_limit else "model_error"

@@ -104,6 +104,9 @@ CORPORA_DIR = ROOT / "corpora"
 CHROMA_DIR = ROOT / "chroma_db"
 RESULTS_DIR = ROOT / "results"
 
+# One JSON line per POST /ask. AI201_LOG_PATH points a test run at its own file.
+LOG_PATH = Path(os.getenv("AI201_LOG_PATH") or ROOT / "logs" / "requests.jsonl")
+
 
 def corpus_path(name: str | None = None) -> Path:
     """Folder holding the documents for a corpus."""

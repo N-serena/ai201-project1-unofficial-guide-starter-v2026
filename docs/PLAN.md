@@ -25,7 +25,7 @@ Status: `todo` · `doing` · `done`
 | 3 | Timeout on each model attempt, plus one overall deadline across retries | M2 | Claude | done |
 | 4 | Defined failure responses: empty reply and exhausted retries become a named error; `/ask` returns JSON with an error kind and a 502/503/504, never an empty answer or a bare 500 | M2 | Claude | done |
 | 5 | Regression check: `test.py` plus a few real questions still answer as before | M2 | Claude runs, you read | done, with a timeout finding to decide on |
-| 6 | Structured log: one JSON line per `/ask` in `logs/requests.jsonl` — timestamp, question, outcome, error kind, status code, duration, attempts, tokens. Failures logged too | M3 | Claude | todo |
+| 6 | Structured log: one JSON line per `/ask` in `logs/requests.jsonl` — timestamp, question, outcome, error kind, status code, duration, attempts, tokens. Failures logged too | M3 | Claude | done |
 | 7 | `RUNNING.md` capstone section, tested from a clean clone in a fresh 3.13 venv | M3 | Claude | todo |
 | 8 | Cost: ten real requests, average tokens and seconds. README **Running It**, **Instrumentation** (10+ entries and a failed run) and **What It Costs** | M3 | Claude | todo |
 | 9 | Five capstone criteria in `criteria.md`, committed as `add capstone criteria` before any results | M4 | **You write them.** Claude only asks the three self-check questions | todo |
@@ -52,7 +52,12 @@ Status: `todo` · `doing` · `done`
   `error_kind` and `corpus`, plus `question` once one was read.
   `serve.py::ERROR_STATUS` holds the mapping.
 - **Log record** (fixed in step 6): field names do not change after the first
-  committed entries, so before and after runs stay comparable.
+  committed entries, so before and after runs stay comparable. The fields, in
+  order, are `requestlog.FIELDS`: `timestamp`, `request_id`, `question`,
+  `outcome`, `status`, `error_kind`, `error`, `answer`, `sources`,
+  `best_distance`, `duration_ms`, `model_ms`, `attempts`, `cached`,
+  `prompt_tokens`, `output_tokens`, `model`, `fault`, `error_detail`,
+  `raw_body`. Each one is described at the top of `requestlog.py`.
 - **Fault names** (fixed in step 2): `AI201_FAULT` is `hang`, `empty`,
   `ratelimit` or `error`. Unset means the real service.
 
@@ -134,8 +139,34 @@ search on. Unit 2's after run used `TOP_K = 8`.
   slow success. The 20.88 s call is also past the 20 s deadline.
 - **Tokens:** 9,987 for 15 calls, about 666 per call.
 
-**Open, for the user:** keep 10 s and 20 s and let the criteria and the
-Milestone 6 improvement deal with the tail, or change the limits now.
+**Decided:** keep 10 s and 20 s. The criteria and the Milestone 6
+improvement deal with the tail.
+
+## Log probe (step 6)
+
+Nine requests through the Flask test client, logged to a scratch file with
+`AI201_LOG_PATH`. Nothing was written to `logs/`.
+
+| Request | Outcome | Status | Kind | duration_ms | model_ms | Attempts | Tokens |
+|---|---|---|---|---|---|---|---|
+| fault `hang` | error | 504 | `timeout` | 12761 | 11400 | 1 | — |
+| fault `empty` | error | 502 | `empty_reply` | 2666 | 1431 | 1 | — |
+| fault `error` | error | 502 | `model_error` | 2428 | 1357 | 1 | — |
+| fault `ratelimit` | error | 503 | `rate_limited` | 9521 | 8416 | 4 | — |
+| body `not json` | error | 400 | `bad_request` | 6 | — | 0 | — |
+| `{"question": 5}` | error | 400 | `bad_request` | 0 | — | 0 | — |
+| out-of-scope question | refused | 200 | — | 1271 | — | 0 | — |
+| in-scope, cached | answered | 200 | — | 48 | 0 | 0 | — |
+| in-scope, uncached | answered | 200 | — | 3087 | 2013 | 1 | 625 / 33 |
+
+- All nine lines have every field, in order. Each `X-Request-Id` header
+  matched its line.
+- `model_ms` on a process's first model call includes about 1.3 s of client
+  setup. An instant fake reply logged about 1,400 ms. A long-running server
+  pays this once. A one-request-per-process test pays it every time.
+- The cache is on by default in the server, so a repeated question is
+  served from `.cache` at no cost. Cost runs need `AI201_CACHE=0` or new
+  questions.
 
 ## Watch-outs
 

@@ -4,6 +4,32 @@ Newest first.
 
 ---
 
+## 2026-11-16 — The request log
+
+**Decision:** `serve.py` writes one JSON line per `POST /ask` to
+`logs/requests.jsonl` through `requestlog.py`. Every line carries the same
+twenty fields in the same order, null when there's nothing to report.
+`generate.py` keeps per-call stats (attempts, model time, tokens, cache hit)
+in a thread-local record that the route reads after the pipeline returns or
+raises. `AI201_LOG_PATH` sends a test run to its own file. `logs/` is not
+git-ignored, so the run record can be committed.
+
+**Why:**
+
+- The fixed shape means before and after runs can be compared line for line.
+- A bad request or a failed call writes its line on the same path as a
+  success, so a failure can't show up only as a missing line.
+- `model_ms` next to `duration_ms` separates time spent on the model from
+  retrieval, which is what the step 5 latency finding needs.
+- The stats are thread-local because Flask's development server handles each
+  request on its own thread.
+- A failed log write is printed and never fails the request.
+
+**Not logged:** the command line and `run_eval.py`. The run path is the
+server, and the eval writes its own results file.
+
+---
+
 ## 2026-11-16 — Error kinds, status codes and what the caller sees
 
 **Decision:** `generate.py` raises `ModelCallError` with a `kind`, a sentence

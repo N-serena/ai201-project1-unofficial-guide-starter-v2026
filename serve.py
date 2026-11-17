@@ -20,18 +20,19 @@ Why this exists: `app.py` runs once and exits, which is fine on your laptop
 and impossible to deploy. A hosted service has to stay up and wait for
 requests. This is the smallest thing that does that.
 
-⚠️ There is deliberately no logging, no timing and no metrics in this file.
-Unit 9 has you build the structured log yourself — the request line, the
-timing field everyone skips, the whole instrument-before-you-deploy exercise.
-Shipping a logger here would hand you the answer to that. Add yours in unit 9;
-this file stays the bare shell until then.
+Every POST /ask writes one line to the request log (`requestlog.py`), bad
+requests and failures included. The response's X-Request-Id header matches
+the line's `request_id`.
 """
 
 import os
+import time
+import uuid
 
 from flask import Flask, jsonify, request
 
 import config
+import requestlog
 
 app = Flask(__name__)
 
@@ -92,7 +93,50 @@ def ask():
 
     A failure returns `error` and `error_kind`, with the status from
     ERROR_STATUS.
+
+    Every call writes one line to the request log, whatever happened.
     """
+    import generate
+
+    started = time.monotonic()
+    timestamp = requestlog.now()
+    request_id = uuid.uuid4().hex[:12]
+    generate.reset_call_stats()
+
+    seen = {"question": None, "error_detail": None, "raw_body": None}
+    response, status = _answer(seen)
+    body = response.get_json()
+
+    if status == 200:
+        outcome = "refused" if body.get("refused") else "answered"
+    else:
+        outcome = "error"
+    requestlog.write(
+        {
+            "timestamp": timestamp,
+            "request_id": request_id,
+            "question": seen["question"],
+            "outcome": outcome,
+            "status": status,
+            "error_kind": body.get("error_kind"),
+            "error": body.get("error"),
+            "answer": body.get("answer"),
+            "sources": body.get("sources"),
+            "best_distance": body.get("best_distance"),
+            "duration_ms": round((time.monotonic() - started) * 1000),
+            **generate.call_stats(),
+            "model": config.MODEL,
+            "fault": config.FAULT or None,
+            "error_detail": seen["error_detail"],
+            "raw_body": seen["raw_body"],
+        }
+    )
+    response.headers["X-Request-Id"] = request_id
+    return response, status
+
+
+def _answer(seen: dict):
+    """Run one /ask. Returns (response, status) and fills `seen` for the log."""
     from app import ask_pipeline
     from generate import ModelCallError, QuotaGuard
 
@@ -101,15 +145,18 @@ def ask():
     question = question.strip() if isinstance(question, str) else ""
 
     if not question:
+        seen["raw_body"] = request.get_data(as_text=True)[:200]
         return _error(
             "bad_request",
             "Send JSON with a question in it, like "
             '{"question": "is the housing lottery random?"}',
         )
 
+    seen["question"] = question
     try:
         outcome = ask_pipeline(question, corpus=config.CORPUS)
     except ModelCallError as exc:
+        seen["error_detail"] = exc.detail
         return _error(exc.kind, str(exc), question)
     except QuotaGuard:
         return _error(
@@ -120,16 +167,19 @@ def ask():
     except Exception as exc:  # noqa: BLE001 — a reader gets this, not a traceback
         return _error("internal", f"{type(exc).__name__}: {exc}", question)
 
-    return jsonify(
-        {
-            "question": question,
-            "answer": outcome["answer"],
-            "refused": outcome["refused"],
-            "sources": outcome["sources"],
-            "best_distance": round(outcome["best_distance"], 4),
-            "threshold": outcome["threshold"],
-            "corpus": config.CORPUS,
-        }
+    return (
+        jsonify(
+            {
+                "question": question,
+                "answer": outcome["answer"],
+                "refused": outcome["refused"],
+                "sources": outcome["sources"],
+                "best_distance": round(outcome["best_distance"], 4),
+                "threshold": outcome["threshold"],
+                "corpus": config.CORPUS,
+            }
+        ),
+        200,
     )
 
 
