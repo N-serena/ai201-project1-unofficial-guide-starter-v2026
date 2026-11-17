@@ -27,7 +27,7 @@ Status: `todo` · `doing` · `done`
 | 5 | Regression check: `test.py` plus a few real questions still answer as before | M2 | Claude runs, you read | done, with a timeout finding to decide on |
 | 6 | Structured log: one JSON line per `/ask` in `logs/requests.jsonl` — timestamp, question, outcome, error kind, status code, duration, attempts, tokens. Failures logged too | M3 | Claude | done |
 | 7 | `RUNNING.md` capstone section, tested from a clean clone in a fresh 3.13 venv | M3 | Claude | done |
-| 8 | Cost: ten real requests, average tokens and seconds. README **Running It**, **Instrumentation** (10+ entries and a failed run) and **What It Costs** | M3 | Claude | todo |
+| 8 | Cost: ten real requests, average tokens and seconds. README **Running It**, **Instrumentation** (10+ entries and a failed run) and **What It Costs** | M3 | Claude | done |
 | 9 | Five capstone criteria in `criteria.md`, committed as `add capstone criteria` before any results | M4 | **You write them.** Claude only asks the three self-check questions | todo |
 | 10 | Test runner for your five criteria, three trials each; **Run Log and Verdicts** with pasted output; commit named as first results | M5 | Claude builds and runs, you check | todo |
 | 11 | Verdicts and a stage-plus-mechanism diagnosis for every miss | M6 | You call them, Claude checks against the data | todo |
@@ -187,6 +187,25 @@ new Python 3.13.15 venv and a copy of `.env`.
 - **Not tested:** `gunicorn` on Linux or macOS, and the macOS/Linux setup
   lines.
 
+## Session record and cost (step 8)
+
+`.venv` rebuilt on Python 3.13.15. `python test.py`: 10 of 10. The server was
+started from RUNNING.md with `AI201_CACHE=0`, then restarted with
+`AI201_FAULT=hang` for one request. Fourteen lines went to
+`logs/requests.jsonl`: 10 answered, 2 refused, 1 `bad_request`, 1 `timeout`.
+No real call timed out this time.
+
+| Per answered question (n = 10) | Mean | Min | Max |
+|---|---|---|---|
+| Tokens in | 630.0 | 587 | 665 |
+| Tokens out | 35.6 | 22 | 55 |
+| Tokens, in and out | 665.6 | 632 | 705 |
+| `duration_ms` | 2352 | 634 | 4865 |
+| `model_ms` | 2243 | 548 | 4789 |
+
+Outside the model call, an answered request took 78 ms on average, not
+counting the first request in the process.
+
 ## Watch-outs
 
 - **Quota.** Failure trials use the fault switch and cost nothing. Happy-path
@@ -196,9 +215,14 @@ new Python 3.13.15 venv and a copy of `.env`.
 - **Index is git-ignored.** A clean clone must run `python app.py index` first.
 - **Gunicorn does not run on Windows.** The local command is
   `python serve.py`.
-- **Python version.** The repo's own `.venv` is still 3.14, but the pins say
-  3.11–3.13. The run path in `RUNNING.md` uses 3.13, tested in step 7. To
-  match it, rebuild `.venv` with `py -3.13 -m venv .venv` before step 8.
+- **Python version.** Resolved in step 8. The repo's `.venv` was rebuilt on
+  3.13.15, and `python test.py` passes 10 of 10.
+- **One log per purpose.** `logs/requests.jsonl` is the step 8 session
+  record, committed and pasted in the README. Test runs from step 10 on set
+  `AI201_LOG_PATH` to a file under `results/`, so each trial set has its own
+  log and the session record stays as pasted.
+- **Cost numbers come from step 8.** Re-measure after Milestone 6 only if
+  the improvement changes the prompt or the retries.
 - **README format.** Capstone section names are bold labels under one
   `## Capstone` heading, never `###`.
 - **Commits.** At least eight new ones this unit, three of them in steps 2–5.

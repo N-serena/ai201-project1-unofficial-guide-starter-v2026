@@ -4,6 +4,23 @@ Newest first.
 
 ---
 
+## 2026-11-16 — Cost is reported in tokens and seconds, measured from the log
+
+**Decision:** the cost per run is the mean of the token counts the service
+reported, and of the logged times, over ten uncached answered questions from
+one real session. No dollar figure goes in until Milestone 7, and only from
+a per-token price the user reads off the provider's pricing page.
+
+**Why:** the brief asks for a measurement. Tokens and seconds are what the
+system recorded. The session ran on the free tier, so it spent $0, and a
+dollar figure would multiply a measurement by a price nobody in this session
+has checked.
+
+**Also:** `logs/requests.jsonl` holds only that session and is committed as
+the run record. Later test runs write their own logs with `AI201_LOG_PATH`.
+
+---
+
 ## 2026-11-16 — The request log
 
 **Decision:** `serve.py` writes one JSON line per `POST /ask` to

@@ -904,3 +904,94 @@ Out of scope:
   download already come back from `/ask` with a readable message. My claim
   covers the model call only.
 - **Hosting.** The service runs locally on Path B, with a committed log.
+
+**Running It**
+
+Path B: local, with a committed log. After a one-time setup on Python 3.13,
+`python serve.py` starts the service. [RUNNING.md](RUNNING.md) has the setup,
+the start command, what the environment needs, and every setting. I tested
+those steps from two fresh clones on 2026-11-16, and the results are in
+`docs/PLAN.md` under Clean-clone test. The record of a real session is
+`logs/requests.jsonl`, pasted under **Instrumentation**.
+
+**Instrumentation**
+
+Every `POST /ask` appends one JSON line to `logs/requests.jsonl`.
+`serve.py::ask` builds the line and `requestlog.py::write` writes it. Every
+line has the same twenty fields in the same order, and a field is null when
+there's nothing to report.
+
+- **What came in:** `timestamp` (UTC), `request_id`, `question`, and
+  `raw_body` when the body held no question
+- **What went out:** `outcome` (answered, refused or error), `status`,
+  `answer`, `sources`, `best_distance`, `error`, `error_kind`
+- **How long:** `duration_ms` for the whole request, and `model_ms` for the
+  model call, retries and waits included
+- **What it cost:** `attempts`, `cached`, `prompt_tokens`, `output_tokens`
+- **Context:** `model`, `fault`, and `error_detail`, which holds the
+  service's raw error text
+
+The per-call numbers come from `generate.py::call_stats`. The response's
+`X-Request-Id` header matches the line's `request_id`.
+
+This is the real session, unedited and in order. I started the server as
+RUNNING.md says, with `AI201_CACHE=0` so every in-scope question was a real
+call. I sent the five unit 2 questions, two out-of-scope questions, an empty
+question, and the five unit 2 questions again. Then I restarted it with
+`AI201_FAULT=hang` and sent one more question.
+
+```json
+{"timestamp": "2026-11-17T01:24:18.466+00:00", "request_id": "42ecfbed1b72", "question": "What time does the bakery in Kestrelford sell out?", "outcome": "answered", "status": 200, "error_kind": null, "error": null, "answer": "The bakery in Kestrelford sells out by 11am. \n\n(Source: guide_kestrelford.md and guide_eating.md)", "sources": ["guide_eating.md", "guide_givens_mill.md", "guide_kestrelford.md", "guide_marchwood.md"], "best_distance": 0.3413, "duration_ms": 2480, "model_ms": 2102, "attempts": 1, "cached": false, "prompt_tokens": 625, "output_tokens": 33, "model": "gemini-3.5-flash-lite", "fault": null, "error_detail": null, "raw_body": null}
+{"timestamp": "2026-11-17T01:24:21.019+00:00", "request_id": "2562cf6beec6", "question": "How often do Marchwood's trams run on weekdays?", "outcome": "answered", "status": 200, "error_kind": null, "error": null, "answer": "Marchwood's trams run every 8 minutes on weekdays (found in `guide_marchwood.md` and `guide_accessibility.md`).", "sources": ["guide_accessibility.md", "guide_eating.md", "guide_marchwood.md"], "best_distance": 0.2275, "duration_ms": 831, "model_ms": 755, "attempts": 1, "cached": false, "prompt_tokens": 665, "output_tokens": 31, "model": "gemini-3.5-flash-lite", "fault": null, "error_detail": null, "raw_body": null}
+{"timestamp": "2026-11-17T01:24:21.935+00:00", "request_id": "a31ad499ecad", "question": "Why do visitors get caught out by bus tickets in this region?", "outcome": "answered", "status": 200, "error_kind": null, "error": null, "answer": "Visitors get confused by bus tickets because three operators run in the region and they do not accept each other's tickets (guide_regional_transport.md).", "sources": ["guide_givens_mill.md", "guide_kestrelford.md", "guide_marchwood.md", "guide_regional_transport.md"], "best_distance": 0.6871, "duration_ms": 2589, "model_ms": 2516, "attempts": 1, "cached": false, "prompt_tokens": 663, "output_tokens": 32, "model": "gemini-3.5-flash-lite", "fault": null, "error_detail": null, "raw_body": null}
+{"timestamp": "2026-11-17T01:24:24.567+00:00", "request_id": "1ecf3c943575", "question": "When does the road to Elder Ness flood?", "outcome": "answered", "status": 200, "error_kind": null, "error": null, "answer": "The single access road to Elder Ness floods at the highest spring tides, roughly six times a year, for about two hours either side of high water. \n\nSource: `guide_elder_ness.md` (and also mentioned in `guide_walking.md`).", "sources": ["guide_elder_ness.md", "guide_walking.md"], "best_distance": 0.2666, "duration_ms": 3842, "model_ms": 3753, "attempts": 1, "cached": false, "prompt_tokens": 587, "output_tokens": 55, "model": "gemini-3.5-flash-lite", "fault": null, "error_detail": null, "raw_body": null}
+{"timestamp": "2026-11-17T01:24:28.449+00:00", "request_id": "e5cecc91259a", "question": "How long should I allow for the mill museum in Brightwater?", "outcome": "answered", "status": 200, "error_kind": null, "error": null, "answer": "You should allow 90 minutes for the mill building/museum in Brightwater (guide_brightwater.md).", "sources": ["guide_accessibility.md", "guide_brightwater.md", "guide_givens_mill.md", "guide_marchwood.md"], "best_distance": 0.266, "duration_ms": 4865, "model_ms": 4789, "attempts": 1, "cached": false, "prompt_tokens": 610, "output_tokens": 24, "model": "gemini-3.5-flash-lite", "fault": null, "error_detail": null, "raw_body": null}
+{"timestamp": "2026-11-17T01:24:33.368+00:00", "request_id": "1842f869b180", "question": "What is the capital of Mongolia?", "outcome": "refused", "status": 200, "error_kind": null, "error": null, "answer": "I don't have enough information about that.", "sources": [], "best_distance": 0.8084, "duration_ms": 79, "model_ms": null, "attempts": 0, "cached": false, "prompt_tokens": null, "output_tokens": null, "model": "gemini-3.5-flash-lite", "fault": null, "error_detail": null, "raw_body": null}
+{"timestamp": "2026-11-17T01:24:33.493+00:00", "request_id": "4e879fa0f947", "question": "How do I change the oil in a diesel engine?", "outcome": "refused", "status": 200, "error_kind": null, "error": null, "answer": "I don't have enough information about that.", "sources": [], "best_distance": 0.9035, "duration_ms": 68, "model_ms": null, "attempts": 0, "cached": false, "prompt_tokens": null, "output_tokens": null, "model": "gemini-3.5-flash-lite", "fault": null, "error_detail": null, "raw_body": null}
+{"timestamp": "2026-11-17T01:24:33.609+00:00", "request_id": "d45012de2af6", "question": null, "outcome": "error", "status": 400, "error_kind": "bad_request", "error": "Send JSON with a question in it, like {\"question\": \"is the housing lottery random?\"}", "answer": null, "sources": null, "best_distance": null, "duration_ms": 0, "model_ms": null, "attempts": 0, "cached": false, "prompt_tokens": null, "output_tokens": null, "model": "gemini-3.5-flash-lite", "fault": null, "error_detail": null, "raw_body": "{\"question\": \"\"}"}
+{"timestamp": "2026-11-17T01:24:33.638+00:00", "request_id": "e2b931310880", "question": "What time does the bakery in Kestrelford sell out?", "outcome": "answered", "status": 200, "error_kind": null, "error": null, "answer": "The bakery in Kestrelford sells out by 11am. \n\n(Sources: `guide_kestrelford.md` and `guide_eating.md`)", "sources": ["guide_eating.md", "guide_givens_mill.md", "guide_kestrelford.md", "guide_marchwood.md"], "best_distance": 0.3413, "duration_ms": 661, "model_ms": 582, "attempts": 1, "cached": false, "prompt_tokens": 625, "output_tokens": 36, "model": "gemini-3.5-flash-lite", "fault": null, "error_detail": null, "raw_body": null}
+{"timestamp": "2026-11-17T01:24:34.346+00:00", "request_id": "376558f496f8", "question": "How often do Marchwood's trams run on weekdays?", "outcome": "answered", "status": 200, "error_kind": null, "error": null, "answer": "Marchwood's trams run every 8 minutes on weekdays (from `guide_marchwood.md` and `guide_accessibility.md`).", "sources": ["guide_accessibility.md", "guide_eating.md", "guide_marchwood.md"], "best_distance": 0.2275, "duration_ms": 3474, "model_ms": 3401, "attempts": 1, "cached": false, "prompt_tokens": 665, "output_tokens": 30, "model": "gemini-3.5-flash-lite", "fault": null, "error_detail": null, "raw_body": null}
+{"timestamp": "2026-11-17T01:24:37.856+00:00", "request_id": "bab3a8d5dd0d", "question": "Why do visitors get caught out by bus tickets in this region?", "outcome": "answered", "status": 200, "error_kind": null, "error": null, "answer": "Visitors often get confused about bus tickets because there are three different operators running in the region, and they do not accept each other's tickets. \n\nSource: `guide_regional_transport.md`", "sources": ["guide_givens_mill.md", "guide_kestrelford.md", "guide_marchwood.md", "guide_regional_transport.md"], "best_distance": 0.6871, "duration_ms": 861, "model_ms": 792, "attempts": 1, "cached": false, "prompt_tokens": 663, "output_tokens": 42, "model": "gemini-3.5-flash-lite", "fault": null, "error_detail": null, "raw_body": null}
+{"timestamp": "2026-11-17T01:24:38.752+00:00", "request_id": "f6e3ebba9625", "question": "When does the road to Elder Ness flood?", "outcome": "answered", "status": 200, "error_kind": null, "error": null, "answer": "The single access road to Elder Ness floods at the highest spring tides, roughly six times a year, for about two hours either side of high water. \n\nSources: `guide_elder_ness.md` and `guide_walking.md`", "sources": ["guide_elder_ness.md", "guide_walking.md"], "best_distance": 0.2666, "duration_ms": 3279, "model_ms": 3194, "attempts": 1, "cached": false, "prompt_tokens": 587, "output_tokens": 51, "model": "gemini-3.5-flash-lite", "fault": null, "error_detail": null, "raw_body": null}
+{"timestamp": "2026-11-17T01:24:42.062+00:00", "request_id": "4bf92928d28d", "question": "How long should I allow for the mill museum in Brightwater?", "outcome": "answered", "status": 200, "error_kind": null, "error": null, "answer": "You should allow 90 minutes for the mill museum in Brightwater (guide_brightwater.md).", "sources": ["guide_accessibility.md", "guide_brightwater.md", "guide_givens_mill.md", "guide_marchwood.md"], "best_distance": 0.266, "duration_ms": 634, "model_ms": 548, "attempts": 1, "cached": false, "prompt_tokens": 610, "output_tokens": 22, "model": "gemini-3.5-flash-lite", "fault": null, "error_detail": null, "raw_body": null}
+{"timestamp": "2026-11-17T01:25:02.019+00:00", "request_id": "43ad9e7a3c7f", "question": "When does the road to Elder Ness flood?", "outcome": "error", "status": 504, "error_kind": "timeout", "error": "The model did not answer within 10.0s.", "answer": null, "sources": null, "best_distance": null, "duration_ms": 11999, "model_ms": 11580, "attempts": 1, "cached": false, "prompt_tokens": null, "output_tokens": null, "model": "gemini-3.5-flash-lite", "fault": "hang", "error_detail": "ReadTimeout: timed out", "raw_body": null}
+```
+
+The failed and rejected runs:
+
+- **Line 8, a rejected input.** An empty question got a 400 with
+  `bad_request` in 0 ms, and the model was never called.
+- **Line 14, an injected hang.** It got a 504 with `timeout` after 11,999 ms.
+  `model_ms` is 11,580: the 10 s timeout plus about 1.6 s of setup for the
+  client and the fake endpoint, which the first model call in a new server
+  process pays.
+  `error_detail` holds the SDK's own `ReadTimeout`.
+
+**What It Costs**
+
+Measured from the ten answered lines above. Each one was uncached and took
+one attempt.
+
+| Per answered question | Mean | Min | Max |
+|---|---|---|---|
+| Tokens in | 630.0 | 587 | 665 |
+| Tokens out | 35.6 | 22 | 55 |
+| Tokens, in and out | 665.6 | 632 | 705 |
+| Time, whole request | 2.35 s | 0.63 s | 4.87 s |
+| Time in the model call | 2.24 s | 0.55 s | 4.79 s |
+
+How I measured it: the token counts are what the service reported on each
+response, logged per request. The times are the logged `duration_ms` and
+`model_ms`. A script read `logs/requests.jsonl` with `requestlog.read` and
+averaged the ten answered lines. Together they used 6,656 tokens.
+
+- **Refused questions cost no tokens.** The gate stops them before the
+  model, after 68–79 ms of local work.
+- **A rejected request costs nothing.**
+- **Local compute is small next to the model.** Outside the model call, an
+  answered question took 78 ms on average, not counting the first request.
+- **This session spent $0.** It ran on the free tier, so the real limit is
+  the quota.
+
+Turning tokens into dollars needs the model's per-token price. That, and the
+hundred-a-day arithmetic, come in Milestone 7.
