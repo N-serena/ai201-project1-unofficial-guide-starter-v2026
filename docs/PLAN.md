@@ -26,7 +26,7 @@ Status: `todo` · `doing` · `done`
 | 4 | Defined failure responses: empty reply and exhausted retries become a named error; `/ask` returns JSON with an error kind and a 502/503/504, never an empty answer or a bare 500 | M2 | Claude | done |
 | 5 | Regression check: `test.py` plus a few real questions still answer as before | M2 | Claude runs, you read | done, with a timeout finding to decide on |
 | 6 | Structured log: one JSON line per `/ask` in `logs/requests.jsonl` — timestamp, question, outcome, error kind, status code, duration, attempts, tokens. Failures logged too | M3 | Claude | done |
-| 7 | `RUNNING.md` capstone section, tested from a clean clone in a fresh 3.13 venv | M3 | Claude | todo |
+| 7 | `RUNNING.md` capstone section, tested from a clean clone in a fresh 3.13 venv | M3 | Claude | done |
 | 8 | Cost: ten real requests, average tokens and seconds. README **Running It**, **Instrumentation** (10+ entries and a failed run) and **What It Costs** | M3 | Claude | todo |
 | 9 | Five capstone criteria in `criteria.md`, committed as `add capstone criteria` before any results | M4 | **You write them.** Claude only asks the three self-check questions | todo |
 | 10 | Test runner for your five criteria, three trials each; **Run Log and Verdicts** with pasted output; commit named as first results | M5 | Claude builds and runs, you check | todo |
@@ -168,6 +168,25 @@ Nine requests through the Flask test client, logged to a scratch file with
   served from `.cache` at no cost. Cost runs need `AI201_CACHE=0` or new
   questions.
 
+## Clean-clone test (step 7)
+
+Two clones of commit `2feb2eb` into the session scratch folder, each with a
+new Python 3.13.15 venv and a copy of `.env`.
+
+- **Clone 1, from Git Bash, with an empty home folder** so Chroma had to
+  download the embedding model. The install took 119 s. The index took 14 s,
+  including a 79.3 MB download that takes 167 MB on disk. The fresh index was
+  2.5 MB. The server ran on port 5055. Health, an answer, a cached repeat, a
+  refusal and a bad request all returned as expected, and each left a
+  20-field log line.
+- **Clone 2, the documented PowerShell lines run as written**, with the
+  normal home folder, so the model was already cached. `Activate.ps1` ran
+  under the current execution policy. The setup took 59 s. `python serve.py`
+  served on port 5000, both `Invoke-RestMethod` lines worked, and the answer
+  was logged: 3086 ms total, 2712 ms in the model, 665 / 30 tokens.
+- **Not tested:** `gunicorn` on Linux or macOS, and the macOS/Linux setup
+  lines.
+
 ## Watch-outs
 
 - **Quota.** Failure trials use the fault switch and cost nothing. Happy-path
@@ -177,8 +196,9 @@ Nine requests through the Flask test client, logged to a scratch file with
 - **Index is git-ignored.** A clean clone must run `python app.py index` first.
 - **Gunicorn does not run on Windows.** The local command is
   `python serve.py`.
-- **Python version.** The current `.venv` is 3.14, but the pins say 3.11–3.13.
-  The clean-clone test uses 3.13.
+- **Python version.** The repo's own `.venv` is still 3.14, but the pins say
+  3.11–3.13. The run path in `RUNNING.md` uses 3.13, tested in step 7. To
+  match it, rebuild `.venv` with `py -3.13 -m venv .venv` before step 8.
 - **README format.** Capstone section names are bold labels under one
   `## Capstone` heading, never `###`.
 - **Commits.** At least eight new ones this unit, three of them in steps 2–5.

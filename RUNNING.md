@@ -4,6 +4,118 @@ Everything about how the starter works and how to use it.
 
 ---
 
+## Capstone run path: local, with a log
+
+The capstone runs locally (Path B). One command starts it, and every
+question it answers leaves a line in `logs/requests.jsonl`.
+
+These steps were tested on 2026-11-16 from a fresh clone. The test used
+Windows 11, Python 3.13.15, a new virtual environment and an empty model
+cache, following the steps in this order.
+
+### What the environment needs
+
+| Thing | What it is |
+|---|---|
+| Python | 3.13. The pins support 3.11 to 3.13, and not 3.14 |
+| Packages | `requirements.txt`, each pinned with a lower and an upper bound |
+| Versions in the tested install | chromadb 0.6.3, google-genai 1.75.0, Flask 3.1.3, httpx 0.28.1, onnxruntime 1.32.0, posthog 3.25.0, python-dotenv 1.1.1, rank-bm25 0.2.2, gunicorn 23.0.0 |
+| Embedding model | all-MiniLM-L6-v2 (ONNX), downloaded by Chroma the first time you index. 79.3 MB to download, 167 MB on disk under `~/.cache/chroma/onnx_models` |
+| Search index | `chroma_db/`, built on your machine by `python app.py index`. 2.5 MB for `city_guides`. Git ignores it, so every clone builds its own |
+| Answer model | `gemini-3.5-flash-lite`, hosted. Needs `GEMINI_API_KEY` in `.env` |
+| Network | `chroma-onnx-models.s3.amazonaws.com` once, for the model. The Gemini API for every answer the cache doesn't already hold |
+
+### One-time setup
+
+Windows PowerShell, from the repo folder:
+
+```powershell
+py -3.13 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+copy .env.example .env
+python app.py index
+```
+
+Paste your key into `.env` after the `copy` line. On macOS or Linux, use
+`python3.13 -m venv .venv`, `source .venv/bin/activate` and `cp` in place
+of the first two lines and `copy`.
+
+In the tested run, the install took 119 s and the index took 14 s,
+including the model download.
+
+### Start it
+
+```powershell
+python serve.py
+```
+
+It listens on `http://localhost:5000` until you press Ctrl-C. Set `PORT`
+to use another port. Gunicorn doesn't run on Windows. On Linux or macOS,
+`gunicorn serve:app` is the way a host would start it, though that wasn't
+tested this unit.
+
+### Check it from a second terminal
+
+In Windows PowerShell, `curl` is a different command, so use
+`Invoke-RestMethod`:
+
+```powershell
+Invoke-RestMethod http://localhost:5000/health
+```
+
+```powershell
+Invoke-RestMethod -Method Post http://localhost:5000/ask -ContentType 'application/json' -Body '{"question": "How often do Marchwood''s trams run on weekdays?"}'
+```
+
+From Git Bash, macOS or Linux:
+
+```bash
+curl -X POST localhost:5000/ask -H 'Content-Type: application/json' -d '{"question": "What is the capital of Mongolia?"}'
+```
+
+What the tested run returned:
+
+| Request | Status | Total | Logged |
+|---|---|---|---|
+| `GET /health` | 200 | — | not logged. `index_ready: true` |
+| trams question | 200 | 4426 ms | answered, 1 attempt, 665 tokens in, 31 out |
+| trams question again | 200 | 78 ms | answered from the cache, 0 attempts |
+| Mongolia question | 200 | 69 ms | refused by the gate, no model call |
+| `{"q": 1}` | 400 | 0 ms | `bad_request` |
+
+### The log
+
+Every `POST /ask` appends one JSON line to `logs/requests.jsonl`,
+including bad requests and failures. Every line has the same twenty fields
+in the same order. `requestlog.py` lists and explains them at the top. The
+`X-Request-Id` response header matches the line's `request_id`. `logs/` is
+not git-ignored, so a run record can be committed.
+
+### Settings
+
+Each one is an environment variable, read when the server starts.
+
+| Variable | Default | What it does |
+|---|---|---|
+| `PORT` | `5000` | port to listen on |
+| `AI201_CACHE` | `1` | `0` sends every question to the model. Use it when measuring cost |
+| `AI201_MODEL_TIMEOUT` | `10` | seconds one model attempt may take |
+| `AI201_MODEL_DEADLINE` | `20` | seconds the whole model call may take, retries included |
+| `AI201_LOG_PATH` | `logs/requests.jsonl` | where the log goes |
+| `AI201_FAULT` | unset | `hang`, `empty`, `ratelimit` or `error`. Sends model calls to a fake endpoint that misbehaves that way, with no quota spent |
+
+In PowerShell, set one for the rest of that terminal session, and clear it
+when you're done:
+
+```powershell
+$env:AI201_FAULT = "hang"
+python serve.py
+Remove-Item Env:AI201_FAULT
+```
+
+---
+
 ## Before your first class
 
 Setup happens **before class**, not during it. The
