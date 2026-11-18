@@ -262,7 +262,7 @@ are in the README under **The Improvement**.
 The brief's Milestones 5 and 6 ask for three full runs before the fix and
 three after, in a table with Run 1, Run 2, Run 3 and MET or MISSED, plus real
 log lines pasted under it. There are two before runs (`_0140`, `_0145`) and
-one after (`_0154`), and the verdicts say "met". On 2026-11-18 the user chose
+one after (`_0154`), and the verdicts said "met" (changed to MET on 2026-11-18). On 2026-11-18 the user chose
 to finish step 13 first and close this in a later resubmission. The plan for
 it: export commit `2323e75` with `git archive` into a scratch folder for the
 third before run, run the current code twice more, then rewrite both run logs

@@ -1138,11 +1138,11 @@ Each trial: 2 in-scope questions, 2 off-topic questions, no body, and `{}`.
 
 | Criterion | Target | Result | Verdict |
 |---|---|---|---|
-| C1 | 5 of 5 | 5 of 5, curl 10.08–10.15 s | met |
-| C2 | 12 of 12 | 12 of 12, longest shared run 7 characters | met |
-| C3 | 3 of 3 | 3 of 3 | met |
-| C4 | 3 of 3 | 3 of 3 | met |
-| C5 | 5 of 5 in each of 3 trials | 15 of 15 | met |
+| C1 | 5 of 5 | 5 of 5, curl 10.08–10.15 s | MET |
+| C2 | 12 of 12 | 12 of 12, longest shared run 7 characters | MET |
+| C3 | 3 of 3 | 3 of 3 | MET |
+| C4 | 3 of 3 | 3 of 3 | MET |
+| C5 | 5 of 5 in each of 3 trials | 15 of 15 | MET |
 
 For C2 I accept the runner's reading of "contains none of the `error_detail`
 text": a shared run of 20 or more characters would count as raw SDK text. The
