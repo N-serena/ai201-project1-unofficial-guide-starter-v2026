@@ -1112,4 +1112,42 @@ Each trial: 2 in-scope questions, 2 off-topic questions, no body, and `{}`.
 | 3 | What is the recommended dosage of ibuprofen… | 200 | True | 0 | yes |
 | 3 | How do I write a for loop in Rust? | 200 | True | 0 | yes |
 
-Verdicts, and a diagnosis for every miss, follow in the next step.
+*Verdicts*
+
+| Criterion | Target | Result | Verdict |
+|---|---|---|---|
+| C1 | 5 of 5 | 5 of 5, curl 10.08–10.15 s | met |
+| C2 | 12 of 12 | 12 of 12, longest shared run 7 characters | met |
+| C3 | 3 of 3 | 3 of 3 | met |
+| C4 | 3 of 3 | 3 of 3 | met |
+| C5 | 5 of 5 in each of 3 trials | 15 of 15 | met |
+
+For C2 I accept the runner's reading of "contains none of the `error_detail`
+text": a shared run of 20 or more characters would count as raw SDK text. The
+7 characters it found were a common word, like " model ".
+
+A second full run a few minutes later, in
+`results/capstone_2026-11-18_0145/`, gave the same tallies.
+
+*Diagnosis*
+
+No criterion missed, so there's no miss to diagnose. The trials still show
+one thing a caller would feel: the first request a new server handles is slow,
+and C1 and C3 leave it out because they count from the second request.
+
+| Phase | First request: model call / everything else | Later requests |
+|---|---|---|
+| hang | 12,597 / 723 ms | about 10,010 / 90 ms |
+| empty | 1,621 / 305 ms | about 5 / 60 ms |
+| rate-limit, deadline 5 s | 4,317 / 297 ms | about 3,036 / 65 ms |
+
+- **Stage:** the model call, which spends 1.3 to 2.6 s more on the first
+  request. Retrieval adds another 0.2 to 0.6 s.
+- **Mechanism:** `generate.py::_call_with_retries` fixes each attempt's
+  timeout before it calls `_get_client()`. On the first request,
+  `_get_client()` imports `google.genai` and builds the client, so that time
+  lands on top of the 10 s timeout.
+- **Effect:** on a hang, the first request after a restart took 13.38 s by
+  curl in the first run and 11.81 s in the second. Both are over the 11 s that
+  C1 promises every later request. The 20 s deadline still holds, because it
+  starts before the setup.
