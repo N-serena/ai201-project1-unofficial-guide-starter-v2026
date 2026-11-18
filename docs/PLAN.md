@@ -29,7 +29,7 @@ Status: `todo` · `doing` · `done`
 | 7 | `RUNNING.md` capstone section, tested from a clean clone in a fresh 3.13 venv | M3 | Claude | done |
 | 8 | Cost: ten real requests, average tokens and seconds. README **Running It**, **Instrumentation** (10+ entries and a failed run) and **What It Costs** | M3 | Claude | done |
 | 9 | Five capstone criteria in `criteria.md`, committed as `add capstone criteria` before any results | M4 | **You write them.** Claude only asks the three self-check questions | done: C1–C5 written, Claude checked them against the code |
-| 10 | Test runner for your five criteria, three trials each; **Run Log and Verdicts** with pasted output; commit named as first results | M5 | Claude builds and runs, you check | todo |
+| 10 | Test runner for your five criteria, three trials each; **Run Log and Verdicts** with pasted output; commit named as first results | M5 | Claude builds and runs, you check | done: every target met. Verdicts are step 11 |
 | 11 | Verdicts and a stage-plus-mechanism diagnosis for every miss | M6 | You call them, Claude checks against the data | todo |
 | 12 | One improvement aimed at a diagnosis, full re-run, **The Improvement** with both tables side by side | M6 | Claude builds, you decide which fix | todo |
 | 13 | Hundred-a-day arithmetic, **What's Still Broken**, the one next thing, **How I Used AI**, submission check | M7 | You write How I Used AI | todo |
@@ -209,6 +209,33 @@ No real call timed out this time.
 
 Outside the model call, an answered request took 78 ms on average, not
 counting the first request in the process.
+
+## First capstone run (step 10)
+
+`tools/capstone_trials.py`, run on 2026-11-18. Output is in
+`results/capstone_2026-11-18_0140/` and pasted in the README under **Run Log
+and Verdicts**.
+
+| Criterion | Target | Met |
+|---|---|---|
+| C1 | 5 of 5 | 5 of 5, curl 10.08–10.15 s |
+| C2 | 12 of 12 | 12 of 12, longest shared run 7 characters |
+| C3 | 3 of 3 | 3 of 3, `model_ms` about 3,030 |
+| C4 | 3 of 3 | 3 of 3 |
+| C5 | 5 of 5 in each of 3 trials | 3 of 3 trials, 15 of 15 |
+
+For step 11:
+
+- Nothing missed, so there is no miss to diagnose. Step 12 still needs one
+  improvement, so the diagnosis has to aim at something the trials show.
+- The uncounted first request is where the time goes. The C1 warm-up took
+  13.38 s by curl, over the 11 s a caller would see on any other request.
+  The C3 warm-up spent 4,317 ms in the model call against about 3,030 for
+  the rest.
+- C2's 20-character rule is the runner's reading of "contains none of the
+  `error_detail` text". The user should agree with it before calling C2.
+- The real phase made one real model call. The cache served every other
+  answered request.
 
 ## Watch-outs
 
