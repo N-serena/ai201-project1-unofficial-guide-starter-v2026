@@ -4,6 +4,26 @@ Newest first.
 
 ---
 
+## 2026-11-18 — Warm up retrieval and the model client at startup
+
+**Decision:** `serve.py::main` calls `_warm_up()` before it serves. It runs one
+search and builds the model client through `generate.warm_up()`. A failure is
+printed and the server starts anyway.
+
+**Why:** the trials showed the first request paying 1.5–3 s of setup, and the
+client's share of it landed on top of the 10 s attempt timeout, so a hang took
+13.38 s. Warming up moves that cost to startup, where no caller waits on it.
+After the change the first hang took 10.09 s.
+
+**Considered:** starting the attempt's clock before the client is built. That
+caps the first request at about 10 s, but it leaves the first real call about
+8 s to answer, and step 5 showed real calls already running close to 10 s.
+
+**Limit:** `gunicorn serve:app` skips `main()`, so a hosted run still pays on
+its first request. Hosting is out of scope.
+
+---
+
 ## 2026-11-18 — C2's raw-text check counts 20 shared characters
 
 **Decision:** the trial runner reads "the response's `error` contains none of

@@ -31,7 +31,7 @@ Status: `todo` · `doing` · `done`
 | 9 | Five capstone criteria in `criteria.md`, committed as `add capstone criteria` before any results | M4 | **You write them.** Claude only asks the three self-check questions | done: C1–C5 written, Claude checked them against the code |
 | 10 | Test runner for your five criteria, three trials each; **Run Log and Verdicts** with pasted output; commit named as first results | M5 | Claude builds and runs, you check | done: every target met. Verdicts are step 11 |
 | 11 | Verdicts and a stage-plus-mechanism diagnosis for every miss | M6 | You call them, Claude checks against the data | done: all five met. The slow first request is diagnosed for step 12 |
-| 12 | One improvement aimed at a diagnosis, full re-run, **The Improvement** with both tables side by side | M6 | Claude builds, you decide which fix | todo |
+| 12 | One improvement aimed at a diagnosis, full re-run, **The Improvement** with both tables side by side | M6 | Claude builds, you decide which fix | done: startup warm-up, hang first request 13.38 s → 10.09 s, all five still met |
 | 13 | Hundred-a-day arithmetic, **What's Still Broken**, the one next thing, **How I Used AI**, submission check | M7 | You write How I Used AI | todo |
 
 ## Dependencies
@@ -247,6 +247,15 @@ Diagnosis for step 12, in the README under **Run Log and Verdicts**: each
 attempt's timeout is fixed in `generate.py::_call_with_retries` before
 `_get_client()` runs. The first request's import and client build, 1.3–2.6 s,
 therefore lands on top of the 10 s. The user picks the fix in step 12.
+
+## Improvement (step 12)
+
+The user chose to warm up at startup. `serve.py::_warm_up` runs one search
+and calls `generate.warm_up()` before `app.run`, which adds 2.9 s to startup
+and makes no model call. The re-run is in `results/capstone_2026-11-18_0154/`.
+The first request in every phase now matches the later ones: hang 10.09 s by
+curl, against 13.38 s before. C1–C5 all still met. Before and after tables
+are in the README under **The Improvement**.
 
 ## Watch-outs
 
