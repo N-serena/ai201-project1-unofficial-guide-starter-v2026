@@ -53,6 +53,12 @@ has checked.
 **Also:** `logs/requests.jsonl` holds only that session and is committed as
 the run record. Later test runs write their own logs with `AI201_LOG_PATH`.
 
+**Update, 2026-11-18:** at the user's request, Claude read the price off the
+Gemini API pricing page: $0.30 per million input tokens and $2.50 per million
+output tokens on the paid tier. The README gives the page and the date, so the
+figure can be checked. One answered question costs $0.000278, and a hundred a
+day cost $0.0278.
+
 ---
 
 ## 2026-11-16 — The request log

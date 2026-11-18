@@ -32,7 +32,7 @@ Status: `todo` · `doing` · `done`
 | 10 | Test runner for your five criteria, three trials each; **Run Log and Verdicts** with pasted output; commit named as first results | M5 | Claude builds and runs, you check | done: every target met. Verdicts are step 11 |
 | 11 | Verdicts and a stage-plus-mechanism diagnosis for every miss | M6 | You call them, Claude checks against the data | done: all five met. The slow first request is diagnosed for step 12 |
 | 12 | One improvement aimed at a diagnosis, full re-run, **The Improvement** with both tables side by side | M6 | Claude builds, you decide which fix | done: startup warm-up, hang first request 13.38 s → 10.09 s, all five still met |
-| 13 | Hundred-a-day arithmetic, **What's Still Broken**, the one next thing, **How I Used AI**, submission check | M7 | You write How I Used AI | todo |
+| 13 | Hundred-a-day arithmetic, **What's Still Broken**, the one next thing, **How I Used AI**, submission check | M7 | You write How I Used AI | in progress: hundred-a-day arithmetic done. Next is which target to tighten |
 
 ## Dependencies
 
@@ -256,6 +256,17 @@ and makes no model call. The re-run is in `results/capstone_2026-11-18_0154/`.
 The first request in every phase now matches the later ones: hang 10.09 s by
 curl, against 13.38 s before. C1–C5 all still met. Before and after tables
 are in the README under **The Improvement**.
+
+## Open gap, deferred by the user (step 13)
+
+The brief's Milestones 5 and 6 ask for three full runs before the fix and
+three after, in a table with Run 1, Run 2, Run 3 and MET or MISSED, plus real
+log lines pasted under it. There are two before runs (`_0140`, `_0145`) and
+one after (`_0154`), and the verdicts say "met". On 2026-11-18 the user chose
+to finish step 13 first and close this in a later resubmission. The plan for
+it: export commit `2323e75` with `git archive` into a scratch folder for the
+third before run, run the current code twice more, then rewrite both run logs
+in the brief's format.
 
 ## Watch-outs
 

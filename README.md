@@ -993,8 +993,30 @@ averaged the ten answered lines. Together they used 6,656 tokens.
 - **This session spent $0.** It ran on the free tier, so the real limit is
   the quota.
 
-Turning tokens into dollars needs the model's per-token price. That, and the
-hundred-a-day arithmetic, come in Milestone 7.
+*In dollars*
+
+The price is Google's paid tier for `gemini-3.5-flash-lite`, from the Gemini
+API pricing page (https://ai.google.dev/gemini-api/docs/pricing), read on
+2026-11-18: $0.30 per million input tokens and $2.50 per million output
+tokens.
+
+| Per answered question | Tokens | Price per token | Cost |
+|---|---|---|---|
+| In | 630.0 | $0.30 / 1,000,000 | $0.000189 |
+| Out | 35.6 | $2.50 / 1,000,000 | $0.000089 |
+| **Total** | | | **$0.000278** |
+
+**A hundred people a day**, one question each, would cost about 3 cents:
+100 × $0.000278 = $0.0278 a day. That's $0.0278 × 30 = $0.83 a month, or
+$0.0278 × 365 = $10.15 a year.
+
+- **This is the upper bound for the average question.** It assumes every
+  question is answered and uncached. Refused questions, bad requests and
+  cached answers cost $0, so a real day costs less.
+- **The largest answer measured** used 665 tokens in and 55 out, which is
+  $0.000337. At that size every time, a hundred questions would cost $0.0337
+  a day.
+- **On the free tier it costs $0.** The limit there is the quota.
 
 **Run Log and Verdicts**
 
