@@ -1261,3 +1261,30 @@ I'd fix real model calls timing out. In step 5, about 1 in 15 real calls took
 longer than the 10 s timeout, so a normal question would get a 504 where it
 should get an answer, which makes it the only failure here that a real user
 hits without any fault injected.
+
+**How I Used AI**
+
+I worked with Claude (Claude Code) through the whole unit. It wrote the
+hardening code, the trial runner and first drafts of these sections, and it
+ran the trials. I chose the shape and the scope, wrote the five criteria,
+called the verdicts and picked the fix. I ran every git commit myself. Two
+moments shaped the result most.
+
+*Asking it to write a criterion's reason.* While building C1, I had the
+condition, the error and the timer, and I asked Claude to fill in the reason
+so we could move faster. It declined, quoting the brief's rule that a model
+doesn't write the criteria, and asked me two short questions: what the extra
+second over the 10 s timeout covers, and what a longer wait looks like to a
+caller. My answers became C1's reason: retrieval overhead, and a long wait
+looks like the app froze. I changed how I worked from then on, answering
+short questions for each criterion where I'd been waiting for a draft.
+
+*Asking it to check my criteria before committing.* Once all five were
+written, I asked Claude to check their logic against the code and propose
+fixes only if something was wrong. It found two gaps. C2 didn't say the fault
+requests had to be in-scope questions, and the relevance gate runs before the
+model call, so an off-topic question would get a 200 refusal and never reach
+the fault. C5's "5 of 5" read as one trial where the brief asks for three. I
+accepted both changes, "3 in-scope requests" and "5 of 5 in each of 3
+trials", before the `add capstone criteria` commit. The rest of the wording
+stayed mine.
