@@ -274,6 +274,11 @@ def _get_client():
     return _client
 
 
+def warm_up() -> None:
+    """Build the client now, so the first model call doesn't pay for it."""
+    _get_client()
+
+
 def generate(prompt: str, system: str | None = None, cache: bool = True) -> str:
     """
     Send a prompt and get text back.

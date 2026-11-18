@@ -1151,3 +1151,52 @@ and C1 and C3 leave it out because they count from the second request.
   curl in the first run and 11.81 s in the second. Both are over the 11 s that
   C1 promises every later request. The 20 s deadline still holds, because it
   starts before the setup.
+
+**The Improvement**
+
+Aimed at the diagnosis above: the first request paid for loading retrieval and
+building the model client, and the client's part landed on top of the 10 s
+timeout.
+
+The fix: `serve.py` now runs `_warm_up()` before it takes requests. It runs
+one search, which loads the embedding model, the index and the BM25 ranking,
+and it calls `generate.warm_up()`, which builds the model client. No model call
+is made, so it costs no tokens. Startup now prints `Warmed up in 2.9s`, and a
+warm-up failure is printed and left for `/ask` to report. It covers
+`python serve.py`, the run path. `gunicorn` imports `serve:app` and skips
+`main()`, so a hosted run would still pay on its first request.
+
+Re-run: `tools/capstone_trials.py`, unchanged, with the results in
+`results/capstone_2026-11-18_0154/`.
+
+*The first request in each phase*
+
+The target of the fix. Times are from each phase's log, in milliseconds. The
+C1 row adds curl's time for the same request.
+
+| Phase | Before: whole request / model call | After: whole request / model call | Later requests, after |
+|---|---|---|---|
+| hang (C1), by curl | 13.38 s | 10.09 s | 10.09–10.12 s |
+| hang | 13,320 / 12,597 | 10,073 / 10,007 | 10,086 / 10,013 |
+| empty | 1,926 / 1,621 | 71 / 5 | 70 / 5 |
+| error | 1,651 / 1,363 | 68 / 5 | 68 / 4 |
+| rate-limit | 8,706 / 8,363 | 7,111 / 7,047 | 7,135 / 7,062 |
+| rate-limit, deadline 5 s (C3) | 4,614 / 4,317 | 3,077 / 3,017 | 3,097 / 3,027 |
+
+*The five criteria*
+
+The regression check: the fix must not cost any criterion.
+
+| Criterion | Target | Before (`_0140`) | After (`_0154`) |
+|---|---|---|---|
+| C1 | 5 of 5 | 5 of 5 | 5 of 5 |
+| C2 | 12 of 12 | 12 of 12 | 12 of 12 |
+| C3 | 3 of 3 | 3 of 3 | 3 of 3 |
+| C4 | 3 of 3 | 3 of 3 | 3 of 3 |
+| C5 | 5 of 5 in each of 3 trials | 15 of 15 | 15 of 15 |
+
+**Did it help?** Yes. On a hang, the first request after a restart now takes
+10.09 s by curl, inside the 11 s that C1 sets for every later request. The
+gap between the first request and the rest is gone in every phase. All five
+criteria still meet their targets. The cost is 2.9 s of extra startup, paid
+once, before the server takes a request.

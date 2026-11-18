@@ -183,7 +183,29 @@ def _answer(seen: dict):
     )
 
 
+def _warm_up() -> None:
+    """Load retrieval and build the model client before the first request.
+
+    Left to the first request, these add 1.5–3 s to it, on top of the model
+    call's own timeout. No model call is made. A failure is printed, and /ask
+    reports it when a request needs that part.
+    """
+    started = time.monotonic()
+    try:
+        import generate
+        from store import search
+
+        search("warm-up", corpus=config.CORPUS)
+        generate.warm_up()
+    except Exception as exc:  # noqa: BLE001 — /ask reports the same failure
+        print(f"Warm-up incomplete: {type(exc).__name__}: {exc}")
+        return
+    print(f"Warmed up in {time.monotonic() - started:.1f}s")
+
+
 def main():
+    _warm_up()
+
     # Hosts tell you which port to listen on through PORT, and they expect you
     # on 0.0.0.0. Binding 127.0.0.1 instead works perfectly on your laptop and
     # then answers nothing at all once deployed, because the host's router
