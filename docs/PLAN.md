@@ -28,7 +28,7 @@ Status: `todo` · `doing` · `done`
 | 6 | Structured log: one JSON line per `/ask` in `logs/requests.jsonl` — timestamp, question, outcome, error kind, status code, duration, attempts, tokens. Failures logged too | M3 | Claude | done |
 | 7 | `RUNNING.md` capstone section, tested from a clean clone in a fresh 3.13 venv | M3 | Claude | done |
 | 8 | Cost: ten real requests, average tokens and seconds. README **Running It**, **Instrumentation** (10+ entries and a failed run) and **What It Costs** | M3 | Claude | done |
-| 9 | Five capstone criteria in `criteria.md`, committed as `add capstone criteria` before any results | M4 | **You write them.** Claude only asks the three self-check questions | todo |
+| 9 | Five capstone criteria in `criteria.md`, committed as `add capstone criteria` before any results | M4 | **You write them.** Claude only asks the three self-check questions | done: C1–C5 written, Claude checked them against the code |
 | 10 | Test runner for your five criteria, three trials each; **Run Log and Verdicts** with pasted output; commit named as first results | M5 | Claude builds and runs, you check | todo |
 | 11 | Verdicts and a stage-plus-mechanism diagnosis for every miss | M6 | You call them, Claude checks against the data | todo |
 | 12 | One improvement aimed at a diagnosis, full re-run, **The Improvement** with both tables side by side | M6 | Claude builds, you decide which fix | todo |
@@ -42,6 +42,10 @@ Status: `todo` · `doing` · `done`
 - 9 must be committed before 10 produces any number. The commit order is the
   evidence.
 - 12 needs 11's diagnosis to aim at.
+- For 10: each fault runs on its own server start, so pacing never carries
+  over between C2 and C3. C2's bad requests carry no `error_detail`, so only
+  its 9 fault requests test the raw-text check. C4's answered questions are
+  real model calls, and can hit the 10 s timeout. That still leaves a line.
 
 ## Contracts to settle early
 
