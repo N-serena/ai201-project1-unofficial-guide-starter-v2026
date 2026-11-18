@@ -1222,3 +1222,42 @@ The regression check: the fix must not cost any criterion.
 gap between the first request and the rest is gone in every phase. All five
 criteria still meet their targets. The cost is 2.9 s of extra startup, paid
 once, before the server takes a request.
+
+**What's Still Broken**
+
+All five criteria were met, before and after the improvement, so no miss is
+left to fix. Here's what I'd tighten, what I cut, and what I stopped short of.
+
+*The target I set too low: C1*
+
+C1 allowed 11 s, and every counted request took 10.08–10.15 s, so almost a
+full second went unused. I'd tighten it to:
+
+> With the hang fault set, every in-scope request, the first included,
+> returns a 504 `timeout` in under 10.5 seconds by curl's timer, 5 of 5.
+
+Why 10.5 s: the half second is margin for network jitter. Retrieval now takes
+60–100 ms, so most of the old second was covering nothing. The first request
+can be counted now, because the startup warm-up brought it from 13.38 s to
+10.09 s. It would fail if the warm-up stopped working, or if retrieval slowed
+by more than about 0.4 s.
+
+*What I cut*
+
+These are listed under **The Shape**, with the reasons there:
+contradictions in the corpus, retrieval quality, failures before the model
+call, and hosting.
+
+*Where I stopped short*
+
+The brief asks for three full runs before the improvement and three after.
+I have two before (`results/capstone_2026-11-18_0140/` and `_0145/`) and one
+after (`_0154/`). I stopped there to finish the write-up, and I plan to add
+the missing runs in a resubmission.
+
+*The one thing I'd do first*
+
+I'd fix real model calls timing out. In step 5, about 1 in 15 real calls took
+longer than the 10 s timeout, so a normal question would get a 504 where it
+should get an answer, which makes it the only failure here that a real user
+hits without any fault injected.
