@@ -176,3 +176,62 @@ cited for a fact that lives in `guide_brightwater.md`.
      The whole reason the originals stay visible is so someone can see what you
      said before you knew the answer.
      ───────────────────────────────────────────────────────────────────────── -->
+
+---
+
+## Capstone
+
+Five criteria for the hardened model call, written before any capstone results.
+Each trial runs locally with `python serve.py`. A fault is set with
+`AI201_FAULT` when the server starts.
+
+**C1.**
+
+With the hang fault set, every in-scope request after the first returns a 504
+`timeout` in under 11 seconds by curl's timer, 5 of 5.
+
+**Why this target:** the extra second over the 10-second timeout covers
+retrieval overhead. A longer wait looks like the app froze.
+
+**C2.**
+
+For each of the empty, error and rate-limit faults, 3 in-scope requests, and
+for bad requests (no body, `{}`, a list), 3 requests each get the status and
+`error_kind` from the table, and the response's `error` contains none of the
+log's `error_detail` text, 12 of 12.
+
+| Requests | Status | `error_kind` |
+|---|---|---|
+| empty fault | 502 | `empty_reply` |
+| error fault | 502 | `model_error` |
+| rate-limit fault | 503 | `rate_limited` |
+| bad request | 400 | `bad_request` |
+
+**Why this target:** the mapping is fixed, so one miss means a bug. A caller
+may be misled by a wrong observation.
+
+**C3.**
+
+With the rate-limit fault and `AI201_MODEL_DEADLINE=5`, every in-scope request
+after the first logs exactly 3 attempts, 3 of 3.
+
+**Why this target:** fewer attempts might miss, and more attempts mean a longer
+wait and possibly waste.
+
+**C4.**
+
+On the real server, each trial of 6 requests (2 answered, 2 refused, 2 bad
+requests) adds exactly 6 new lines to the log, and each line's `status` matches
+the response's status code, 3 of 3.
+
+**Why this target:** for better debugging. A missing line, or a line with the
+wrong status, increases debugging overhead.
+
+**C5.**
+
+On the real server, each of the 5 off-topic questions in `questions.py` gets a
+response with `"refused": true` and a log line with `attempts` 0, 5 of 5 in
+each of 3 trials.
+
+**Why this target:** one getting through increases misread data. A refused
+question reaching the model signals an issue, like a request failure.
