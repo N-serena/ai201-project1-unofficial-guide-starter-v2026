@@ -4,6 +4,20 @@ Newest first.
 
 ---
 
+## 2026-11-18 — C2's raw-text check counts 20 shared characters
+
+**Decision:** the trial runner reads "the response's `error` contains none of
+the log's `error_detail` text" as: the longest run of characters the two share
+is under 20.
+
+**Why:** the response and the raw error can share ordinary words like "model"
+without leaking anything. A run of 20 characters is longer than any common
+word, and shorter than the smallest piece of an SDK message worth hiding, such
+as `500 INTERNAL. {'error'`. The longest run in both trial runs was 7. The user
+accepted the rule before calling C2 met.
+
+---
+
 ## 2026-11-16 — Cost is reported in tokens and seconds, measured from the log
 
 **Decision:** the cost per run is the mean of the token counts the service

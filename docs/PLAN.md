@@ -30,7 +30,7 @@ Status: `todo` · `doing` · `done`
 | 8 | Cost: ten real requests, average tokens and seconds. README **Running It**, **Instrumentation** (10+ entries and a failed run) and **What It Costs** | M3 | Claude | done |
 | 9 | Five capstone criteria in `criteria.md`, committed as `add capstone criteria` before any results | M4 | **You write them.** Claude only asks the three self-check questions | done: C1–C5 written, Claude checked them against the code |
 | 10 | Test runner for your five criteria, three trials each; **Run Log and Verdicts** with pasted output; commit named as first results | M5 | Claude builds and runs, you check | done: every target met. Verdicts are step 11 |
-| 11 | Verdicts and a stage-plus-mechanism diagnosis for every miss | M6 | You call them, Claude checks against the data | todo |
+| 11 | Verdicts and a stage-plus-mechanism diagnosis for every miss | M6 | You call them, Claude checks against the data | done: all five met. The slow first request is diagnosed for step 12 |
 | 12 | One improvement aimed at a diagnosis, full re-run, **The Improvement** with both tables side by side | M6 | Claude builds, you decide which fix | todo |
 | 13 | Hundred-a-day arithmetic, **What's Still Broken**, the one next thing, **How I Used AI**, submission check | M7 | You write How I Used AI | todo |
 
@@ -236,6 +236,17 @@ For step 11:
   `error_detail` text". The user should agree with it before calling C2.
 - The real phase made one real model call. The cache served every other
   answered request.
+
+## Verdicts (step 11)
+
+The user called all five met and accepted C2's 20-character rule. A second
+run, `results/capstone_2026-11-18_0145/`, matched every tally. Its C1 warm-up
+took 11.81 s.
+
+Diagnosis for step 12, in the README under **Run Log and Verdicts**: each
+attempt's timeout is fixed in `generate.py::_call_with_retries` before
+`_get_client()` runs. The first request's import and client build, 1.3–2.6 s,
+therefore lands on top of the 10 s. The user picks the fix in step 12.
 
 ## Watch-outs
 
