@@ -995,3 +995,121 @@ averaged the ten answered lines. Together they used 6,656 tokens.
 
 Turning tokens into dollars needs the model's per-token price. That, and the
 hundred-a-day arithmetic, come in Milestone 7.
+
+**Run Log and Verdicts**
+
+The first run of all five capstone criteria, on 2026-11-18. The criteria were
+committed first, in `add capstone criteria`.
+
+```powershell
+.venv\Scripts\python.exe tools/capstone_trials.py
+```
+
+`tools/capstone_trials.py` starts a fresh `serve.py` for each phase, sends
+every request through curl, and matches each response to its log line by the
+`X-Request-Id` header. Each phase writes its own log, so nothing here touches
+`logs/requests.jsonl`. Everything from this run is in
+`results/capstone_2026-11-18_0140/`: `report.md` (pasted below), `trials.json`,
+and a request log and server output for each phase.
+
+| Phase | Server settings | Criteria |
+|---|---|---|
+| hang | `AI201_FAULT=hang` | C1 |
+| empty, error, ratelimit | `AI201_FAULT` set to each, one server each | C2 |
+| ratelimit_deadline5 | `AI201_FAULT=ratelimit`, `AI201_MODEL_DEADLINE=5` | C3 |
+| real | no fault, cache on | C2's bad requests, C4, C5 |
+
+- **Warm-up requests.** C1 and C3 count "every in-scope request after the
+  first", so each of those phases sends one warm-up request that isn't counted.
+  It's in the tables, marked "not counted". The C1 warm-up took 13.38 s.
+- **C2's text check.** "Shared" is the longest run of characters that the
+  response's `error` has in common with the log's `error_detail`. The runner
+  counts 20 or more as raw SDK text in the response.
+- **Cost of the run.** One real model call. The second in-scope question was
+  uncached in trial 1. Every other answered request came from the cache, and
+  every fault request went to the fake endpoint.
+
+The report, as the runner wrote it:
+
+*Tallies*
+
+| Criterion | Target | Met |
+|---|---|---|
+| C1 | 5 of 5 | 5 of 5 |
+| C2 | 12 of 12 | 12 of 12 |
+| C3 | 3 of 3 | 3 of 3 |
+| C4 | 3 of 3 | 3 of 3 |
+| C5 | 5 of 5 in each of 3 trials | 3 of 3 trials (15 of 15 questions) |
+
+*C1 — hang fault, 504 `timeout` in under 11 s by curl*
+
+| # | Question | Status | `error_kind` | curl s | Meets |
+|---|---|---|---|---|---|
+| warm-up | What time does the bakery in Kestrelford se… | 504 | timeout | 13.38 | not counted |
+| 1 | What time does the bakery in Kestrelford se… | 504 | timeout | 10.15 | yes |
+| 2 | How often do Marchwood's trams run on weekd… | 504 | timeout | 10.10 | yes |
+| 3 | Why do visitors get caught out by bus ticke… | 504 | timeout | 10.11 | yes |
+| 4 | When does the road to Elder Ness flood? | 504 | timeout | 10.09 | yes |
+| 5 | How long should I allow for the mill museum… | 504 | timeout | 10.08 | yes |
+
+*C2 — status and `error_kind` from the table, no `error_detail` text*
+
+"Shared" is the longest run of characters the response's `error` has in common
+with the log's `error_detail`. 20 or more counts as raw text in the response.
+A bad request never reaches the model, so its `error_detail` is null.
+
+| Requests | Question | Expected | Status | `error_kind` | Shared | Meets |
+|---|---|---|---|---|---|---|
+| empty fault | What time does the bakery in Kest… | 502 empty_reply | 502 | empty_reply | 2 | yes |
+| empty fault | How often do Marchwood's trams ru… | 502 empty_reply | 502 | empty_reply | 2 | yes |
+| empty fault | Why do visitors get caught out by… | 502 empty_reply | 502 | empty_reply | 2 | yes |
+| error fault | What time does the bakery in Kest… | 502 model_error | 502 | model_error | 7 | yes |
+| error fault | How often do Marchwood's trams ru… | 502 model_error | 502 | model_error | 7 | yes |
+| error fault | Why do visitors get caught out by… | 502 model_error | 502 | model_error | 7 | yes |
+| ratelimit fault | What time does the bakery in Kest… | 503 rate_limited | 503 | rate_limited | 3 | yes |
+| ratelimit fault | How often do Marchwood's trams ru… | 503 rate_limited | 503 | rate_limited | 3 | yes |
+| ratelimit fault | Why do visitors get caught out by… | 503 rate_limited | 503 | rate_limited | 3 | yes |
+| bad request: no body | — | 400 bad_request | 400 | bad_request | 0 | yes |
+| bad request: {} | — | 400 bad_request | 400 | bad_request | 0 | yes |
+| bad request: a list | — | 400 bad_request | 400 | bad_request | 0 | yes |
+
+*C3 — rate-limit fault, deadline 5 s, exactly 3 attempts in the log*
+
+| # | Question | Status | Attempts | `model_ms` | Meets |
+|---|---|---|---|---|---|
+| warm-up | What time does the bakery in Kestrelford se… | 503 | 3 | 4317 | not counted |
+| 1 | What time does the bakery in Kestrelford se… | 503 | 3 | 3037 | yes |
+| 2 | How often do Marchwood's trams run on weekd… | 503 | 3 | 3036 | yes |
+| 3 | Why do visitors get caught out by bus ticke… | 503 | 3 | 3030 | yes |
+
+*C4 — 6 requests a trial, 6 new log lines, statuses match*
+
+Each trial: 2 in-scope questions, 2 off-topic questions, no body, and `{}`.
+
+| Trial | Lines added | Response status → log status | Meets |
+|---|---|---|---|
+| 1 | 6 | 200→200, 200→200, 200→200, 200→200, 400→400, 400→400 | yes |
+| 2 | 6 | 200→200, 200→200, 200→200, 200→200, 400→400, 400→400 | yes |
+| 3 | 6 | 200→200, 200→200, 200→200, 200→200, 400→400, 400→400 | yes |
+
+*C5 — off-topic questions refused, `attempts` 0 in the log*
+
+| Trial | Question | Status | `refused` | Attempts | Meets |
+|---|---|---|---|---|---|
+| 1 | What is the capital of Mongolia? | 200 | True | 0 | yes |
+| 1 | How do I change the oil in a diesel engine? | 200 | True | 0 | yes |
+| 1 | Who won the 1994 World Cup? | 200 | True | 0 | yes |
+| 1 | What is the recommended dosage of ibuprofen… | 200 | True | 0 | yes |
+| 1 | How do I write a for loop in Rust? | 200 | True | 0 | yes |
+| 2 | What is the capital of Mongolia? | 200 | True | 0 | yes |
+| 2 | How do I change the oil in a diesel engine? | 200 | True | 0 | yes |
+| 2 | Who won the 1994 World Cup? | 200 | True | 0 | yes |
+| 2 | What is the recommended dosage of ibuprofen… | 200 | True | 0 | yes |
+| 2 | How do I write a for loop in Rust? | 200 | True | 0 | yes |
+| 3 | What is the capital of Mongolia? | 200 | True | 0 | yes |
+| 3 | How do I change the oil in a diesel engine? | 200 | True | 0 | yes |
+| 3 | Who won the 1994 World Cup? | 200 | True | 0 | yes |
+| 3 | What is the recommended dosage of ibuprofen… | 200 | True | 0 | yes |
+| 3 | How do I write a for loop in Rust? | 200 | True | 0 | yes |
+
+Verdicts, and a diagnosis for every miss, follow in the next step.

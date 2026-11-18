@@ -1,0 +1,1158 @@
+{
+  "c1": {
+    "rows": [
+      {
+        "label": "warm-up",
+        "counted": false,
+        "question": "What time does the bakery in Kestrelford sell out?",
+        "status": 504,
+        "seconds": 13.383554,
+        "request_id": "f07ba9ac93f0",
+        "body": {
+          "corpus": "city_guides",
+          "error": "The model did not answer within 10.0s.",
+          "error_kind": "timeout",
+          "question": "What time does the bakery in Kestrelford sell out?"
+        },
+        "log": {
+          "timestamp": "2026-11-18T06:40:53.981+00:00",
+          "request_id": "f07ba9ac93f0",
+          "question": "What time does the bakery in Kestrelford sell out?",
+          "outcome": "error",
+          "status": 504,
+          "error_kind": "timeout",
+          "error": "The model did not answer within 10.0s.",
+          "answer": null,
+          "sources": null,
+          "best_distance": null,
+          "duration_ms": 13320,
+          "model_ms": 12597,
+          "attempts": 1,
+          "cached": false,
+          "prompt_tokens": null,
+          "output_tokens": null,
+          "model": "gemini-3.5-flash-lite",
+          "fault": "hang",
+          "error_detail": "ReadTimeout: timed out",
+          "raw_body": null
+        },
+        "meets": false
+      },
+      {
+        "label": "1",
+        "counted": true,
+        "question": "What time does the bakery in Kestrelford sell out?",
+        "status": 504,
+        "seconds": 10.1519,
+        "request_id": "5a5f58a4ded3",
+        "body": {
+          "corpus": "city_guides",
+          "error": "The model did not answer within 10.0s.",
+          "error_kind": "timeout",
+          "question": "What time does the bakery in Kestrelford sell out?"
+        },
+        "log": {
+          "timestamp": "2026-11-18T06:41:07.368+00:00",
+          "request_id": "5a5f58a4ded3",
+          "question": "What time does the bakery in Kestrelford sell out?",
+          "outcome": "error",
+          "status": 504,
+          "error_kind": "timeout",
+          "error": "The model did not answer within 10.0s.",
+          "answer": null,
+          "sources": null,
+          "best_distance": null,
+          "duration_ms": 10115,
+          "model_ms": 10009,
+          "attempts": 1,
+          "cached": false,
+          "prompt_tokens": null,
+          "output_tokens": null,
+          "model": "gemini-3.5-flash-lite",
+          "fault": "hang",
+          "error_detail": "ReadTimeout: timed out",
+          "raw_body": null
+        },
+        "meets": true
+      },
+      {
+        "label": "2",
+        "counted": true,
+        "question": "How often do Marchwood's trams run on weekdays?",
+        "status": 504,
+        "seconds": 10.098263,
+        "request_id": "7a0b4ea0c970",
+        "body": {
+          "corpus": "city_guides",
+          "error": "The model did not answer within 10.0s.",
+          "error_kind": "timeout",
+          "question": "How often do Marchwood's trams run on weekdays?"
+        },
+        "log": {
+          "timestamp": "2026-11-18T06:41:17.545+00:00",
+          "request_id": "7a0b4ea0c970",
+          "question": "How often do Marchwood's trams run on weekdays?",
+          "outcome": "error",
+          "status": 504,
+          "error_kind": "timeout",
+          "error": "The model did not answer within 10.0s.",
+          "answer": null,
+          "sources": null,
+          "best_distance": null,
+          "duration_ms": 10094,
+          "model_ms": 10014,
+          "attempts": 1,
+          "cached": false,
+          "prompt_tokens": null,
+          "output_tokens": null,
+          "model": "gemini-3.5-flash-lite",
+          "fault": "hang",
+          "error_detail": "ReadTimeout: timed out",
+          "raw_body": null
+        },
+        "meets": true
+      },
+      {
+        "label": "3",
+        "counted": true,
+        "question": "Why do visitors get caught out by bus tickets in this region?",
+        "status": 504,
+        "seconds": 10.114168,
+        "request_id": "f42873e4dcf8",
+        "body": {
+          "corpus": "city_guides",
+          "error": "The model did not answer within 10.0s.",
+          "error_kind": "timeout",
+          "question": "Why do visitors get caught out by bus tickets in this region?"
+        },
+        "log": {
+          "timestamp": "2026-11-18T06:41:27.671+00:00",
+          "request_id": "f42873e4dcf8",
+          "question": "Why do visitors get caught out by bus tickets in this region?",
+          "outcome": "error",
+          "status": 504,
+          "error_kind": "timeout",
+          "error": "The model did not answer within 10.0s.",
+          "answer": null,
+          "sources": null,
+          "best_distance": null,
+          "duration_ms": 10110,
+          "model_ms": 10026,
+          "attempts": 1,
+          "cached": false,
+          "prompt_tokens": null,
+          "output_tokens": null,
+          "model": "gemini-3.5-flash-lite",
+          "fault": "hang",
+          "error_detail": "ReadTimeout: timed out",
+          "raw_body": null
+        },
+        "meets": true
+      },
+      {
+        "label": "4",
+        "counted": true,
+        "question": "When does the road to Elder Ness flood?",
+        "status": 504,
+        "seconds": 10.09214,
+        "request_id": "3d79882ab362",
+        "body": {
+          "corpus": "city_guides",
+          "error": "The model did not answer within 10.0s.",
+          "error_kind": "timeout",
+          "question": "When does the road to Elder Ness flood?"
+        },
+        "log": {
+          "timestamp": "2026-11-18T06:41:37.818+00:00",
+          "request_id": "3d79882ab362",
+          "question": "When does the road to Elder Ness flood?",
+          "outcome": "error",
+          "status": 504,
+          "error_kind": "timeout",
+          "error": "The model did not answer within 10.0s.",
+          "answer": null,
+          "sources": null,
+          "best_distance": null,
+          "duration_ms": 10088,
+          "model_ms": 10008,
+          "attempts": 1,
+          "cached": false,
+          "prompt_tokens": null,
+          "output_tokens": null,
+          "model": "gemini-3.5-flash-lite",
+          "fault": "hang",
+          "error_detail": "ReadTimeout: timed out",
+          "raw_body": null
+        },
+        "meets": true
+      },
+      {
+        "label": "5",
+        "counted": true,
+        "question": "How long should I allow for the mill museum in Brightwater?",
+        "status": 504,
+        "seconds": 10.08341,
+        "request_id": "0aceb8ee4b75",
+        "body": {
+          "corpus": "city_guides",
+          "error": "The model did not answer within 10.0s.",
+          "error_kind": "timeout",
+          "question": "How long should I allow for the mill museum in Brightwater?"
+        },
+        "log": {
+          "timestamp": "2026-11-18T06:41:47.933+00:00",
+          "request_id": "0aceb8ee4b75",
+          "question": "How long should I allow for the mill museum in Brightwater?",
+          "outcome": "error",
+          "status": 504,
+          "error_kind": "timeout",
+          "error": "The model did not answer within 10.0s.",
+          "answer": null,
+          "sources": null,
+          "best_distance": null,
+          "duration_ms": 10079,
+          "model_ms": 10004,
+          "attempts": 1,
+          "cached": false,
+          "prompt_tokens": null,
+          "output_tokens": null,
+          "model": "gemini-3.5-flash-lite",
+          "fault": "hang",
+          "error_detail": "ReadTimeout: timed out",
+          "raw_body": null
+        },
+        "meets": true
+      }
+    ]
+  },
+  "c2": [
+    {
+      "requests": "empty fault",
+      "question": "What time does the bakery in Kestrelford sell out?",
+      "expected": "502 empty_reply",
+      "status": 502,
+      "seconds": 1.963945,
+      "request_id": "02f94548f162",
+      "body": {
+        "corpus": "city_guides",
+        "error": "The model sent back an empty reply.",
+        "error_kind": "empty_reply",
+        "question": "What time does the bakery in Kestrelford sell out?"
+      },
+      "log": {
+        "timestamp": "2026-11-18T06:42:00.233+00:00",
+        "request_id": "02f94548f162",
+        "question": "What time does the bakery in Kestrelford sell out?",
+        "outcome": "error",
+        "status": 502,
+        "error_kind": "empty_reply",
+        "error": "The model sent back an empty reply.",
+        "answer": null,
+        "sources": null,
+        "best_distance": null,
+        "duration_ms": 1926,
+        "model_ms": 1621,
+        "attempts": 1,
+        "cached": false,
+        "prompt_tokens": null,
+        "output_tokens": null,
+        "model": "gemini-3.5-flash-lite",
+        "fault": "empty",
+        "error_detail": "finish_reason=FinishReason.STOP",
+        "raw_body": null
+      },
+      "error_detail": "finish_reason=FinishReason.STOP",
+      "shared": 2,
+      "meets": true
+    },
+    {
+      "requests": "empty fault",
+      "question": "How often do Marchwood's trams run on weekdays?",
+      "expected": "502 empty_reply",
+      "status": 502,
+      "seconds": 0.067,
+      "request_id": "ccbc8d255a4b",
+      "body": {
+        "corpus": "city_guides",
+        "error": "The model sent back an empty reply.",
+        "error_kind": "empty_reply",
+        "question": "How often do Marchwood's trams run on weekdays?"
+      },
+      "log": {
+        "timestamp": "2026-11-18T06:42:02.218+00:00",
+        "request_id": "ccbc8d255a4b",
+        "question": "How often do Marchwood's trams run on weekdays?",
+        "outcome": "error",
+        "status": 502,
+        "error_kind": "empty_reply",
+        "error": "The model sent back an empty reply.",
+        "answer": null,
+        "sources": null,
+        "best_distance": null,
+        "duration_ms": 63,
+        "model_ms": 4,
+        "attempts": 1,
+        "cached": false,
+        "prompt_tokens": null,
+        "output_tokens": null,
+        "model": "gemini-3.5-flash-lite",
+        "fault": "empty",
+        "error_detail": "finish_reason=FinishReason.STOP",
+        "raw_body": null
+      },
+      "error_detail": "finish_reason=FinishReason.STOP",
+      "shared": 2,
+      "meets": true
+    },
+    {
+      "requests": "empty fault",
+      "question": "Why do visitors get caught out by bus tickets in this region?",
+      "expected": "502 empty_reply",
+      "status": 502,
+      "seconds": 0.071402,
+      "request_id": "820eb2cea746",
+      "body": {
+        "corpus": "city_guides",
+        "error": "The model sent back an empty reply.",
+        "error_kind": "empty_reply",
+        "question": "Why do visitors get caught out by bus tickets in this region?"
+      },
+      "log": {
+        "timestamp": "2026-11-18T06:42:02.311+00:00",
+        "request_id": "820eb2cea746",
+        "question": "Why do visitors get caught out by bus tickets in this region?",
+        "outcome": "error",
+        "status": 502,
+        "error_kind": "empty_reply",
+        "error": "The model sent back an empty reply.",
+        "answer": null,
+        "sources": null,
+        "best_distance": null,
+        "duration_ms": 68,
+        "model_ms": 4,
+        "attempts": 1,
+        "cached": false,
+        "prompt_tokens": null,
+        "output_tokens": null,
+        "model": "gemini-3.5-flash-lite",
+        "fault": "empty",
+        "error_detail": "finish_reason=FinishReason.STOP",
+        "raw_body": null
+      },
+      "error_detail": "finish_reason=FinishReason.STOP",
+      "shared": 2,
+      "meets": true
+    },
+    {
+      "requests": "error fault",
+      "question": "What time does the bakery in Kestrelford sell out?",
+      "expected": "502 model_error",
+      "status": 502,
+      "seconds": 1.659036,
+      "request_id": "a1925a9c7ba6",
+      "body": {
+        "corpus": "city_guides",
+        "error": "The model service returned an error.",
+        "error_kind": "model_error",
+        "question": "What time does the bakery in Kestrelford sell out?"
+      },
+      "log": {
+        "timestamp": "2026-11-18T06:42:04.077+00:00",
+        "request_id": "a1925a9c7ba6",
+        "question": "What time does the bakery in Kestrelford sell out?",
+        "outcome": "error",
+        "status": 502,
+        "error_kind": "model_error",
+        "error": "The model service returned an error.",
+        "answer": null,
+        "sources": null,
+        "best_distance": null,
+        "duration_ms": 1651,
+        "model_ms": 1363,
+        "attempts": 1,
+        "cached": false,
+        "prompt_tokens": null,
+        "output_tokens": null,
+        "model": "gemini-3.5-flash-lite",
+        "fault": "error",
+        "error_detail": "ServerError: 500 INTERNAL. {'error': {'code': 500, 'status': 'INTERNAL', 'message': 'Injected fault: internal error.'}}",
+        "raw_body": null
+      },
+      "error_detail": "ServerError: 500 INTERNAL. {'error': {'code': 500, 'status': 'INTERNAL', 'message': 'Injected fault: internal error.'}}",
+      "shared": 7,
+      "meets": true
+    },
+    {
+      "requests": "error fault",
+      "question": "How often do Marchwood's trams run on weekdays?",
+      "expected": "502 model_error",
+      "status": 502,
+      "seconds": 0.081182,
+      "request_id": "307b25baa325",
+      "body": {
+        "corpus": "city_guides",
+        "error": "The model service returned an error.",
+        "error_kind": "model_error",
+        "question": "How often do Marchwood's trams run on weekdays?"
+      },
+      "log": {
+        "timestamp": "2026-11-18T06:42:05.762+00:00",
+        "request_id": "307b25baa325",
+        "question": "How often do Marchwood's trams run on weekdays?",
+        "outcome": "error",
+        "status": 502,
+        "error_kind": "model_error",
+        "error": "The model service returned an error.",
+        "answer": null,
+        "sources": null,
+        "best_distance": null,
+        "duration_ms": 77,
+        "model_ms": 5,
+        "attempts": 1,
+        "cached": false,
+        "prompt_tokens": null,
+        "output_tokens": null,
+        "model": "gemini-3.5-flash-lite",
+        "fault": "error",
+        "error_detail": "ServerError: 500 INTERNAL. {'error': {'code': 500, 'status': 'INTERNAL', 'message': 'Injected fault: internal error.'}}",
+        "raw_body": null
+      },
+      "error_detail": "ServerError: 500 INTERNAL. {'error': {'code': 500, 'status': 'INTERNAL', 'message': 'Injected fault: internal error.'}}",
+      "shared": 7,
+      "meets": true
+    },
+    {
+      "requests": "error fault",
+      "question": "Why do visitors get caught out by bus tickets in this region?",
+      "expected": "502 model_error",
+      "status": 502,
+      "seconds": 0.106251,
+      "request_id": "ac2ba368bd52",
+      "body": {
+        "corpus": "city_guides",
+        "error": "The model service returned an error.",
+        "error_kind": "model_error",
+        "question": "Why do visitors get caught out by bus tickets in this region?"
+      },
+      "log": {
+        "timestamp": "2026-11-18T06:42:05.881+00:00",
+        "request_id": "ac2ba368bd52",
+        "question": "Why do visitors get caught out by bus tickets in this region?",
+        "outcome": "error",
+        "status": 502,
+        "error_kind": "model_error",
+        "error": "The model service returned an error.",
+        "answer": null,
+        "sources": null,
+        "best_distance": null,
+        "duration_ms": 88,
+        "model_ms": 26,
+        "attempts": 1,
+        "cached": false,
+        "prompt_tokens": null,
+        "output_tokens": null,
+        "model": "gemini-3.5-flash-lite",
+        "fault": "error",
+        "error_detail": "ServerError: 500 INTERNAL. {'error': {'code': 500, 'status': 'INTERNAL', 'message': 'Injected fault: internal error.'}}",
+        "raw_body": null
+      },
+      "error_detail": "ServerError: 500 INTERNAL. {'error': {'code': 500, 'status': 'INTERNAL', 'message': 'Injected fault: internal error.'}}",
+      "shared": 7,
+      "meets": true
+    },
+    {
+      "requests": "ratelimit fault",
+      "question": "What time does the bakery in Kestrelford sell out?",
+      "expected": "503 rate_limited",
+      "status": 503,
+      "seconds": 8.716208,
+      "request_id": "d4daea77a4a6",
+      "body": {
+        "corpus": "city_guides",
+        "error": "The model service pushed back on all 4 attempts. Wait a minute and try again.",
+        "error_kind": "rate_limited",
+        "question": "What time does the bakery in Kestrelford sell out?"
+      },
+      "log": {
+        "timestamp": "2026-11-18T06:42:07.743+00:00",
+        "request_id": "d4daea77a4a6",
+        "question": "What time does the bakery in Kestrelford sell out?",
+        "outcome": "error",
+        "status": 503,
+        "error_kind": "rate_limited",
+        "error": "The model service pushed back on all 4 attempts. Wait a minute and try again.",
+        "answer": null,
+        "sources": null,
+        "best_distance": null,
+        "duration_ms": 8706,
+        "model_ms": 8363,
+        "attempts": 4,
+        "cached": false,
+        "prompt_tokens": null,
+        "output_tokens": null,
+        "model": "gemini-3.5-flash-lite",
+        "fault": "ratelimit",
+        "error_detail": "ClientError: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'status': 'RESOURCE_EXHAUSTED', 'message': 'Injected fault: quota exceeded.'}}",
+        "raw_body": null
+      },
+      "error_detail": "ClientError: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'status': 'RESOURCE_EXHAUSTED', 'message': 'Injected fault: quota exceeded.'}}",
+      "shared": 3,
+      "meets": true
+    },
+    {
+      "requests": "ratelimit fault",
+      "question": "How often do Marchwood's trams run on weekdays?",
+      "expected": "503 rate_limited",
+      "status": 503,
+      "seconds": 7.136928,
+      "request_id": "f8edd74b4c63",
+      "body": {
+        "corpus": "city_guides",
+        "error": "The model service pushed back on all 4 attempts. Wait a minute and try again.",
+        "error_kind": "rate_limited",
+        "question": "How often do Marchwood's trams run on weekdays?"
+      },
+      "log": {
+        "timestamp": "2026-11-18T06:42:16.494+00:00",
+        "request_id": "f8edd74b4c63",
+        "question": "How often do Marchwood's trams run on weekdays?",
+        "outcome": "error",
+        "status": 503,
+        "error_kind": "rate_limited",
+        "error": "The model service pushed back on all 4 attempts. Wait a minute and try again.",
+        "answer": null,
+        "sources": null,
+        "best_distance": null,
+        "duration_ms": 7132,
+        "model_ms": 7057,
+        "attempts": 4,
+        "cached": false,
+        "prompt_tokens": null,
+        "output_tokens": null,
+        "model": "gemini-3.5-flash-lite",
+        "fault": "ratelimit",
+        "error_detail": "ClientError: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'status': 'RESOURCE_EXHAUSTED', 'message': 'Injected fault: quota exceeded.'}}",
+        "raw_body": null
+      },
+      "error_detail": "ClientError: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'status': 'RESOURCE_EXHAUSTED', 'message': 'Injected fault: quota exceeded.'}}",
+      "shared": 3,
+      "meets": true
+    },
+    {
+      "requests": "ratelimit fault",
+      "question": "Why do visitors get caught out by bus tickets in this region?",
+      "expected": "503 rate_limited",
+      "status": 503,
+      "seconds": 7.182468,
+      "request_id": "a7c2079744ba",
+      "body": {
+        "corpus": "city_guides",
+        "error": "The model service pushed back on all 4 attempts. Wait a minute and try again.",
+        "error_kind": "rate_limited",
+        "question": "Why do visitors get caught out by bus tickets in this region?"
+      },
+      "log": {
+        "timestamp": "2026-11-18T06:42:23.671+00:00",
+        "request_id": "a7c2079744ba",
+        "question": "Why do visitors get caught out by bus tickets in this region?",
+        "outcome": "error",
+        "status": 503,
+        "error_kind": "rate_limited",
+        "error": "The model service pushed back on all 4 attempts. Wait a minute and try again.",
+        "answer": null,
+        "sources": null,
+        "best_distance": null,
+        "duration_ms": 7178,
+        "model_ms": 7052,
+        "attempts": 4,
+        "cached": false,
+        "prompt_tokens": null,
+        "output_tokens": null,
+        "model": "gemini-3.5-flash-lite",
+        "fault": "ratelimit",
+        "error_detail": "ClientError: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'status': 'RESOURCE_EXHAUSTED', 'message': 'Injected fault: quota exceeded.'}}",
+        "raw_body": null
+      },
+      "error_detail": "ClientError: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'status': 'RESOURCE_EXHAUSTED', 'message': 'Injected fault: quota exceeded.'}}",
+      "shared": 3,
+      "meets": true
+    },
+    {
+      "requests": "bad request: no body",
+      "question": null,
+      "expected": "400 bad_request",
+      "status": 400,
+      "seconds": 0.00996,
+      "request_id": "5f1fb1efb6f3",
+      "body": {
+        "corpus": "city_guides",
+        "error": "Send JSON with a question in it, like {\"question\": \"is the housing lottery random?\"}",
+        "error_kind": "bad_request"
+      },
+      "log": {
+        "timestamp": "2026-11-18T06:42:48.965+00:00",
+        "request_id": "5f1fb1efb6f3",
+        "question": null,
+        "outcome": "error",
+        "status": 400,
+        "error_kind": "bad_request",
+        "error": "Send JSON with a question in it, like {\"question\": \"is the housing lottery random?\"}",
+        "answer": null,
+        "sources": null,
+        "best_distance": null,
+        "duration_ms": 3,
+        "model_ms": null,
+        "attempts": 0,
+        "cached": false,
+        "prompt_tokens": null,
+        "output_tokens": null,
+        "model": "gemini-3.5-flash-lite",
+        "fault": null,
+        "error_detail": null,
+        "raw_body": ""
+      },
+      "error_detail": null,
+      "shared": 0,
+      "meets": true
+    },
+    {
+      "requests": "bad request: {}",
+      "question": null,
+      "expected": "400 bad_request",
+      "status": 400,
+      "seconds": 0.05524,
+      "request_id": "4c6dfb52f351",
+      "body": {
+        "corpus": "city_guides",
+        "error": "Send JSON with a question in it, like {\"question\": \"is the housing lottery random?\"}",
+        "error_kind": "bad_request"
+      },
+      "log": {
+        "timestamp": "2026-11-18T06:42:49.028+00:00",
+        "request_id": "4c6dfb52f351",
+        "question": null,
+        "outcome": "error",
+        "status": 400,
+        "error_kind": "bad_request",
+        "error": "Send JSON with a question in it, like {\"question\": \"is the housing lottery random?\"}",
+        "answer": null,
+        "sources": null,
+        "best_distance": null,
+        "duration_ms": 0,
+        "model_ms": null,
+        "attempts": 0,
+        "cached": false,
+        "prompt_tokens": null,
+        "output_tokens": null,
+        "model": "gemini-3.5-flash-lite",
+        "fault": null,
+        "error_detail": null,
+        "raw_body": "{}"
+      },
+      "error_detail": null,
+      "shared": 0,
+      "meets": true
+    },
+    {
+      "requests": "bad request: a list",
+      "question": null,
+      "expected": "400 bad_request",
+      "status": 400,
+      "seconds": 0.018741,
+      "request_id": "be7c0a2d382d",
+      "body": {
+        "corpus": "city_guides",
+        "error": "Send JSON with a question in it, like {\"question\": \"is the housing lottery random?\"}",
+        "error_kind": "bad_request"
+      },
+      "log": {
+        "timestamp": "2026-11-18T06:42:49.101+00:00",
+        "request_id": "be7c0a2d382d",
+        "question": null,
+        "outcome": "error",
+        "status": 400,
+        "error_kind": "bad_request",
+        "error": "Send JSON with a question in it, like {\"question\": \"is the housing lottery random?\"}",
+        "answer": null,
+        "sources": null,
+        "best_distance": null,
+        "duration_ms": 0,
+        "model_ms": null,
+        "attempts": 0,
+        "cached": false,
+        "prompt_tokens": null,
+        "output_tokens": null,
+        "model": "gemini-3.5-flash-lite",
+        "fault": null,
+        "error_detail": null,
+        "raw_body": "[\"When does the road to Elder Ness flood?\"]"
+      },
+      "error_detail": null,
+      "shared": 0,
+      "meets": true
+    }
+  ],
+  "c3": {
+    "rows": [
+      {
+        "label": "warm-up",
+        "counted": false,
+        "question": "What time does the bakery in Kestrelford sell out?",
+        "status": 503,
+        "seconds": 4.621498,
+        "request_id": "f6d508d91e7d",
+        "body": {
+          "corpus": "city_guides",
+          "error": "The model service kept pushing back until the 5s limit ran out.",
+          "error_kind": "rate_limited",
+          "question": "What time does the bakery in Kestrelford sell out?"
+        },
+        "log": {
+          "timestamp": "2026-11-18T06:42:32.957+00:00",
+          "request_id": "f6d508d91e7d",
+          "question": "What time does the bakery in Kestrelford sell out?",
+          "outcome": "error",
+          "status": 503,
+          "error_kind": "rate_limited",
+          "error": "The model service kept pushing back until the 5s limit ran out.",
+          "answer": null,
+          "sources": null,
+          "best_distance": null,
+          "duration_ms": 4614,
+          "model_ms": 4317,
+          "attempts": 3,
+          "cached": false,
+          "prompt_tokens": null,
+          "output_tokens": null,
+          "model": "gemini-3.5-flash-lite",
+          "fault": "ratelimit",
+          "error_detail": "ClientError: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'status': 'RESOURCE_EXHAUSTED', 'message': 'Injected fault: quota exceeded.'}}",
+          "raw_body": null
+        },
+        "attempts": 3,
+        "meets": true
+      },
+      {
+        "label": "1",
+        "counted": true,
+        "question": "What time does the bakery in Kestrelford sell out?",
+        "status": 503,
+        "seconds": 3.116717,
+        "request_id": "698c616b8d65",
+        "body": {
+          "corpus": "city_guides",
+          "error": "The model service kept pushing back until the 5s limit ran out.",
+          "error_kind": "rate_limited",
+          "question": "What time does the bakery in Kestrelford sell out?"
+        },
+        "log": {
+          "timestamp": "2026-11-18T06:42:37.601+00:00",
+          "request_id": "698c616b8d65",
+          "question": "What time does the bakery in Kestrelford sell out?",
+          "outcome": "error",
+          "status": 503,
+          "error_kind": "rate_limited",
+          "error": "The model service kept pushing back until the 5s limit ran out.",
+          "answer": null,
+          "sources": null,
+          "best_distance": null,
+          "duration_ms": 3113,
+          "model_ms": 3037,
+          "attempts": 3,
+          "cached": false,
+          "prompt_tokens": null,
+          "output_tokens": null,
+          "model": "gemini-3.5-flash-lite",
+          "fault": "ratelimit",
+          "error_detail": "ClientError: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'status': 'RESOURCE_EXHAUSTED', 'message': 'Injected fault: quota exceeded.'}}",
+          "raw_body": null
+        },
+        "attempts": 3,
+        "meets": true
+      },
+      {
+        "label": "2",
+        "counted": true,
+        "question": "How often do Marchwood's trams run on weekdays?",
+        "status": 503,
+        "seconds": 3.096395,
+        "request_id": "291f6f5504eb",
+        "body": {
+          "corpus": "city_guides",
+          "error": "The model service kept pushing back until the 5s limit ran out.",
+          "error_kind": "rate_limited",
+          "question": "How often do Marchwood's trams run on weekdays?"
+        },
+        "log": {
+          "timestamp": "2026-11-18T06:42:40.737+00:00",
+          "request_id": "291f6f5504eb",
+          "question": "How often do Marchwood's trams run on weekdays?",
+          "outcome": "error",
+          "status": 503,
+          "error_kind": "rate_limited",
+          "error": "The model service kept pushing back until the 5s limit ran out.",
+          "answer": null,
+          "sources": null,
+          "best_distance": null,
+          "duration_ms": 3093,
+          "model_ms": 3036,
+          "attempts": 3,
+          "cached": false,
+          "prompt_tokens": null,
+          "output_tokens": null,
+          "model": "gemini-3.5-flash-lite",
+          "fault": "ratelimit",
+          "error_detail": "ClientError: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'status': 'RESOURCE_EXHAUSTED', 'message': 'Injected fault: quota exceeded.'}}",
+          "raw_body": null
+        },
+        "attempts": 3,
+        "meets": true
+      },
+      {
+        "label": "3",
+        "counted": true,
+        "question": "Why do visitors get caught out by bus tickets in this region?",
+        "status": 503,
+        "seconds": 3.107017,
+        "request_id": "ea27571a4bb1",
+        "body": {
+          "corpus": "city_guides",
+          "error": "The model service kept pushing back until the 5s limit ran out.",
+          "error_kind": "rate_limited",
+          "question": "Why do visitors get caught out by bus tickets in this region?"
+        },
+        "log": {
+          "timestamp": "2026-11-18T06:42:43.859+00:00",
+          "request_id": "ea27571a4bb1",
+          "question": "Why do visitors get caught out by bus tickets in this region?",
+          "outcome": "error",
+          "status": 503,
+          "error_kind": "rate_limited",
+          "error": "The model service kept pushing back until the 5s limit ran out.",
+          "answer": null,
+          "sources": null,
+          "best_distance": null,
+          "duration_ms": 3103,
+          "model_ms": 3030,
+          "attempts": 3,
+          "cached": false,
+          "prompt_tokens": null,
+          "output_tokens": null,
+          "model": "gemini-3.5-flash-lite",
+          "fault": "ratelimit",
+          "error_detail": "ClientError: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'status': 'RESOURCE_EXHAUSTED', 'message': 'Injected fault: quota exceeded.'}}",
+          "raw_body": null
+        },
+        "attempts": 3,
+        "meets": true
+      }
+    ]
+  },
+  "c4": [
+    {
+      "trial": 1,
+      "lines_added": 6,
+      "requests": [
+        {
+          "kind": "answered",
+          "status": 200,
+          "log_status": 200,
+          "outcome": "answered",
+          "request_id": "962118aa422c",
+          "seconds": 0.297344
+        },
+        {
+          "kind": "answered",
+          "status": 200,
+          "log_status": 200,
+          "outcome": "answered",
+          "request_id": "aed4a0306509",
+          "seconds": 2.200291
+        },
+        {
+          "kind": "refused",
+          "status": 200,
+          "log_status": 200,
+          "outcome": "refused",
+          "request_id": "034291c8d41e",
+          "seconds": 0.066991
+        },
+        {
+          "kind": "refused",
+          "status": 200,
+          "log_status": 200,
+          "outcome": "refused",
+          "request_id": "336c131efc0e",
+          "seconds": 0.066809
+        },
+        {
+          "kind": "bad",
+          "status": 400,
+          "log_status": 400,
+          "outcome": "error",
+          "request_id": "a64ab5be676c",
+          "seconds": 0.028211
+        },
+        {
+          "kind": "bad",
+          "status": 400,
+          "log_status": 400,
+          "outcome": "error",
+          "request_id": "d23ae9087740",
+          "seconds": 0.004233
+        }
+      ],
+      "meets": true
+    },
+    {
+      "trial": 2,
+      "lines_added": 6,
+      "requests": [
+        {
+          "kind": "answered",
+          "status": 200,
+          "log_status": 200,
+          "outcome": "answered",
+          "request_id": "fb78e0b64435",
+          "seconds": 0.061214
+        },
+        {
+          "kind": "answered",
+          "status": 200,
+          "log_status": 200,
+          "outcome": "answered",
+          "request_id": "bc68c5f4c817",
+          "seconds": 0.085724
+        },
+        {
+          "kind": "refused",
+          "status": 200,
+          "log_status": 200,
+          "outcome": "refused",
+          "request_id": "d8c9c2903e2e",
+          "seconds": 0.067984
+        },
+        {
+          "kind": "refused",
+          "status": 200,
+          "log_status": 200,
+          "outcome": "refused",
+          "request_id": "d0ebdbd7ddba",
+          "seconds": 0.068288
+        },
+        {
+          "kind": "bad",
+          "status": 400,
+          "log_status": 400,
+          "outcome": "error",
+          "request_id": "c80295d58eb9",
+          "seconds": 0.003823
+        },
+        {
+          "kind": "bad",
+          "status": 400,
+          "log_status": 400,
+          "outcome": "error",
+          "request_id": "983454b30aec",
+          "seconds": 0.003992
+        }
+      ],
+      "meets": true
+    },
+    {
+      "trial": 3,
+      "lines_added": 6,
+      "requests": [
+        {
+          "kind": "answered",
+          "status": 200,
+          "log_status": 200,
+          "outcome": "answered",
+          "request_id": "68925731bccb",
+          "seconds": 0.094713
+        },
+        {
+          "kind": "answered",
+          "status": 200,
+          "log_status": 200,
+          "outcome": "answered",
+          "request_id": "6d139112a85f",
+          "seconds": 0.067534
+        },
+        {
+          "kind": "refused",
+          "status": 200,
+          "log_status": 200,
+          "outcome": "refused",
+          "request_id": "96617ac08ebf",
+          "seconds": 0.072787
+        },
+        {
+          "kind": "refused",
+          "status": 200,
+          "log_status": 200,
+          "outcome": "refused",
+          "request_id": "769bfaee8483",
+          "seconds": 0.088967
+        },
+        {
+          "kind": "bad",
+          "status": 400,
+          "log_status": 400,
+          "outcome": "error",
+          "request_id": "bb8b5a006bde",
+          "seconds": 0.007168
+        },
+        {
+          "kind": "bad",
+          "status": 400,
+          "log_status": 400,
+          "outcome": "error",
+          "request_id": "243807c10708",
+          "seconds": 0.005139
+        }
+      ],
+      "meets": true
+    }
+  ],
+  "c5": [
+    {
+      "trial": 1,
+      "rows": [
+        {
+          "question": "What is the capital of Mongolia?",
+          "status": 200,
+          "refused": true,
+          "attempts": 0,
+          "request_id": "167bf8785aa1",
+          "meets": true
+        },
+        {
+          "question": "How do I change the oil in a diesel engine?",
+          "status": 200,
+          "refused": true,
+          "attempts": 0,
+          "request_id": "06b058749e3d",
+          "meets": true
+        },
+        {
+          "question": "Who won the 1994 World Cup?",
+          "status": 200,
+          "refused": true,
+          "attempts": 0,
+          "request_id": "db49038cfa2c",
+          "meets": true
+        },
+        {
+          "question": "What is the recommended dosage of ibuprofen for a headache?",
+          "status": 200,
+          "refused": true,
+          "attempts": 0,
+          "request_id": "996e4a3b061c",
+          "meets": true
+        },
+        {
+          "question": "How do I write a for loop in Rust?",
+          "status": 200,
+          "refused": true,
+          "attempts": 0,
+          "request_id": "f77054c8eef4",
+          "meets": true
+        }
+      ],
+      "meets": true
+    },
+    {
+      "trial": 2,
+      "rows": [
+        {
+          "question": "What is the capital of Mongolia?",
+          "status": 200,
+          "refused": true,
+          "attempts": 0,
+          "request_id": "f661e5452256",
+          "meets": true
+        },
+        {
+          "question": "How do I change the oil in a diesel engine?",
+          "status": 200,
+          "refused": true,
+          "attempts": 0,
+          "request_id": "4cf3d76dbad4",
+          "meets": true
+        },
+        {
+          "question": "Who won the 1994 World Cup?",
+          "status": 200,
+          "refused": true,
+          "attempts": 0,
+          "request_id": "19b6c5aa128e",
+          "meets": true
+        },
+        {
+          "question": "What is the recommended dosage of ibuprofen for a headache?",
+          "status": 200,
+          "refused": true,
+          "attempts": 0,
+          "request_id": "cabebf9a7e25",
+          "meets": true
+        },
+        {
+          "question": "How do I write a for loop in Rust?",
+          "status": 200,
+          "refused": true,
+          "attempts": 0,
+          "request_id": "784f5108f4c5",
+          "meets": true
+        }
+      ],
+      "meets": true
+    },
+    {
+      "trial": 3,
+      "rows": [
+        {
+          "question": "What is the capital of Mongolia?",
+          "status": 200,
+          "refused": true,
+          "attempts": 0,
+          "request_id": "17e8482a52f0",
+          "meets": true
+        },
+        {
+          "question": "How do I change the oil in a diesel engine?",
+          "status": 200,
+          "refused": true,
+          "attempts": 0,
+          "request_id": "566b29ee7fac",
+          "meets": true
+        },
+        {
+          "question": "Who won the 1994 World Cup?",
+          "status": 200,
+          "refused": true,
+          "attempts": 0,
+          "request_id": "d2a63d42f952",
+          "meets": true
+        },
+        {
+          "question": "What is the recommended dosage of ibuprofen for a headache?",
+          "status": 200,
+          "refused": true,
+          "attempts": 0,
+          "request_id": "abc196242258",
+          "meets": true
+        },
+        {
+          "question": "How do I write a for loop in Rust?",
+          "status": 200,
+          "refused": true,
+          "attempts": 0,
+          "request_id": "a85edde1bfde",
+          "meets": true
+        }
+      ],
+      "meets": true
+    }
+  ]
+}
